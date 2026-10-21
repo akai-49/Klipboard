@@ -149,7 +149,7 @@ def build_hfs_plus_image(vol_name: str, app_path: Path) -> bytes:
     nodes.append(root_node)
 
     # 1. .DS_Store in root for drag-to-Applications icon positions
-    ds_store_bytes = make_ds_store({"Klipboard.app": (155, 165), "Applications": (405, 165)})
+    ds_store_bytes = make_ds_store({app_path.name: (155, 165), "Applications": (405, 165)})
     ds_node = {
         "cnid": next_cnid,
         "parent_cnid": K_HFS_ROOT_FOLDER_ID,
@@ -473,7 +473,7 @@ def build_hfs_plus_image(vol_name: str, app_path: Path) -> bytes:
     return bytes(img)
 
 
-def wrap_udzo_dmg(hfs_image: bytes, out_dmg: Path):
+def wrap_udzo_dmg(hfs_image: bytes, out_dmg: Path, vol_name: str = "Klipboard"):
     """Wraps a raw HFS+ volume image into a standard compressed Apple UDZO (.dmg) with a koly trailer."""
     total_sectors = len(hfs_image) // SECTOR_SIZE
     chunk_sectors = 2048
@@ -525,10 +525,10 @@ def wrap_udzo_dmg(hfs_image: bytes, out_dmg: Path):
             "blkx": [
                 {
                     "Attributes": "0x0050",
-                    "CFName": "Klipboard (Apple_HFS : 0)",
+                    "CFName": f"{vol_name} (Apple_HFS : 0)",
                     "Data": mish_blob,
                     "ID": "-1",
-                    "Name": "Klipboard (Apple_HFS : 0)",
+                    "Name": f"{vol_name} (Apple_HFS : 0)",
                 }
             ]
         }
@@ -557,8 +557,9 @@ def main():
 
     app_path = Path(sys.argv[1]).resolve()
     out_dmg = Path(sys.argv[2]).resolve()
-    hfs_bytes = build_hfs_plus_image("Klipboard", app_path)
-    wrap_udzo_dmg(hfs_bytes, out_dmg)
+    vol_name = sys.argv[3] if len(sys.argv) >= 4 else app_path.stem
+    hfs_bytes = build_hfs_plus_image(vol_name, app_path)
+    wrap_udzo_dmg(hfs_bytes, out_dmg, vol_name)
     print(f"Created drag-and-drop DMG: {out_dmg} ({out_dmg.stat().st_size:,} bytes)")
 
 

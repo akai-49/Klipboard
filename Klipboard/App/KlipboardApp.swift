@@ -5,7 +5,7 @@ import Darwin
 @main
 enum KlipboardApp {
     static func main() {
-        cleanupStaleInstancesAndDuplicates()
+        ensureSingleInstanceAndCleanDerivedData()
 
         let app = NSApplication.shared
         let delegate = MainActor.assumeIsolated { AppDelegate() }
@@ -14,13 +14,14 @@ enum KlipboardApp {
         app.run()
     }
 
-    /// Terminates any orphaned/older Klipboard processes (such as PID 52021 or old /Applications/Klipboard.app)
-    /// and removes duplicate/iconless app bundles so Spotlight only shows one working Klipboard with the logo.
-    private static func cleanupStaleInstancesAndDuplicates() {
+    /// Ensures only one Klipboard instance runs at a time and cleans up any iconless
+    /// Xcode DerivedData builds so Spotlight only shows the active app bundle.
+    private static func ensureSingleInstanceAndCleanDerivedData() {
         let myPID = ProcessInfo.processInfo.processIdentifier
-        let legacyBundleIDs: Set<String> = [
-            "com.abhishek.klipboard",
-            "com.abhishek.Klipboard",
+        let currentBundleID = Bundle.main.bundleIdentifier ?? "com.abhishek.Klipboard"
+        let knownBundleIDs: Set<String> = [
+            currentBundleID,
+            currentBundleID.lowercased(),
             "Kai.Klipboard"
         ]
 
@@ -31,7 +32,7 @@ enum KlipboardApp {
             let bundleID = running.bundleIdentifier ?? ""
             let name = running.localizedName ?? ""
             let execName = running.executableURL?.lastPathComponent ?? ""
-            if legacyBundleIDs.contains(bundleID) || name == "Klipboard" || execName == "Klipboard" {
+            if knownBundleIDs.contains(bundleID) || name == "Klipboard" || execName == "Klipboard" {
                 _ = kill(pid, SIGKILL)
                 _ = running.forceTerminate()
                 killedAny = true
@@ -43,10 +44,10 @@ enum KlipboardApp {
         }
 
         let currentBundleURL = Bundle.main.bundleURL.standardizedFileURL
-        removeDuplicateAppBundles(keeping: currentBundleURL, bundleIDs: legacyBundleIDs)
+        removeStaleBuilds(keeping: currentBundleURL, bundleIDs: knownBundleIDs)
     }
 
-    private static func removeDuplicateAppBundles(keeping currentBundleURL: URL, bundleIDs: Set<String>) {
+    private static func removeStaleBuilds(keeping currentBundleURL: URL, bundleIDs: Set<String>) {
         let fm = FileManager.default
         let lsregister = "/System/Library/Frameworks/CoreServices.framework/Frameworks/LaunchServices.framework/Support/lsregister"
         var candidateApps = Set<URL>()
@@ -59,47 +60,36 @@ enum KlipboardApp {
             }
         }
 
-        let realHome = URL(fileURLWithPath: "/Users/\(NSUserName())")
-        let derivedDataRoots: [URL] = [
-            realHome.appendingPathComponent("Library/Developer/Xcode/DerivedData"),
-            realHome.appendingPathComponent(".gemini/users"),
-            URL(fileURLWithPath: "/Users/abhishek/Clipboard/Klipboard/build"),
-            URL(fileURLWithPath: "/Users/abhishek/Clipboard/Klipboard/dist")
-        ]
-
-        for root in derivedDataRoots where fm.fileExists(atPath: root.path) {
-            if let enumerator = fm.enumerator(
-                at: root,
-                includingPropertiesForKeys: [.isDirectoryKey],
-                options: [.skipsPackageDescendants]
-            ) {
-                for case let url as URL in enumerator where url.lastPathComponent == "Klipboard.app" {
-                    candidateApps.insert(url.standardizedFileURL)
-                }
+        let homeDir = fm.homeDirectoryForCurrentUser
+        let derivedDataDir = homeDir.appendingPathComponent("Library/Developer/Xcode/DerivedData")
+        if fm.fileExists(atPath: derivedDataDir.path),
+           let enumerator = fm.enumerator(
+               at: derivedDataDir,
+               includingPropertiesForKeys: [.isDirectoryKey],
+               options: [.skipsPackageDescendants]
+           ) {
+            for case let url as URL in enumerator where url.lastPathComponent == currentBundleURL.lastPathComponent {
+                candidateApps.insert(url.standardizedFileURL)
             }
-        }
-
-        let explicitLocations: [URL] = [
-            URL(fileURLWithPath: "/Applications/Klipboard.app"),
-            URL(fileURLWithPath: "/Users/abhishek/Clipboard/Klipboard/dist/Klipboard.app"),
-            URL(fileURLWithPath: "/Users/abhishek/Clipboard/Klipboard/Klipboard.app"),
-            realHome.appendingPathComponent("Applications/Klipboard.app"),
-            realHome.appendingPathComponent("Downloads/Klipboard.app"),
-            realHome.appendingPathComponent(".Trash/Klipboard.app")
-        ]
-        for loc in explicitLocations {
-            candidateApps.insert(loc.standardizedFileURL)
         }
 
         for appURL in candidateApps where appURL != currentBundleURL {
             let path = appURL.path
-            unregisterFromLaunchServices(lsregisterPath: lsregister, appPath: path)
-            if fm.fileExists(atPath: path) {
-                try? fm.removeItem(at: appURL)
+            let iconPath = appURL.appendingPathComponent("Contents/Resources/AppIcon.icns").path
+            let isDerivedOrTemp = path.contains("/DerivedData/") ||
+                path.contains("/dmg-staging") ||
+                path.contains("/.Trash/") ||
+                path.contains("/dist/Klipboard.app")
+            let isMissingIcon = !fm.fileExists(atPath: iconPath)
+
+            if isDerivedOrTemp || isMissingIcon {
+                unregisterFromLaunchServices(lsregisterPath: lsregister, appPath: path)
+                if fm.fileExists(atPath: path) {
+                    try? fm.removeItem(at: appURL)
+                }
             }
         }
 
-        // Register the active bundle with the logo cleanly
         if fm.isExecutableFile(atPath: lsregister) {
             let proc = Process()
             proc.executableURL = URL(fileURLWithPath: lsregister)

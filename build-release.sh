@@ -3,13 +3,17 @@ set -euo pipefail
 
 cd "$(dirname "$0")"
 
-APP_NAME="Klipboard"
-VERSION="0.1.0"
-BUILD_NUM="1"
-BUNDLE_ID="com.abhishek.Klipboard"
+APP_NAME="${APP_NAME:-Klipboard}"
+VERSION="${VERSION:-0.1.0}"
+BUILD_NUM="${BUILD_NUM:-1}"
+BUNDLE_ID="${BUNDLE_ID:-com.abhishek.Klipboard}"
+MIN_MACOS="${MIN_MACOS:-14.0}"
+ARCH="${ARCH:-$(uname -m)}"
+SIGN_IDENTITY="${SIGN_IDENTITY:--}"
+
 ROOT_DIR="$(cd .. && pwd)"
-DIST_DIR="$(pwd)/dist"
-APP_BUNDLE="${ROOT_DIR}/${APP_NAME}.app"
+DIST_DIR="${DIST_DIR:-$(pwd)/dist}"
+APP_BUNDLE="${APP_BUNDLE:-${ROOT_DIR}/${APP_NAME}.app}"
 DMG_PATH="${DIST_DIR}/${APP_NAME}-${VERSION}.dmg"
 ZIP_PATH="${DIST_DIR}/${APP_NAME}-${VERSION}.zip"
 
@@ -19,7 +23,7 @@ SOURCES=($(find Klipboard -name '*.swift'))
 echo "==> Stopping any running ${APP_NAME} instances..."
 killall "${APP_NAME}" 2>/dev/null || true
 
-echo "==> Removing legacy dist/${APP_NAME}.app bundle so Spotlight only indexes one app..."
+echo "==> Cleaning legacy staging files in ${DIST_DIR}..."
 rm -rf "${DIST_DIR}/${APP_NAME}.app" "${DIST_DIR}/dmg-staging" "${DIST_DIR}/.metadata_never_index"
 mkdir -p "${DIST_DIR}"
 
@@ -27,11 +31,11 @@ echo "==> Preparing ${APP_BUNDLE}..."
 mkdir -p "${APP_BUNDLE}/Contents/MacOS"
 mkdir -p "${APP_BUNDLE}/Contents/Resources"
 
-echo "==> Compiling ${APP_NAME}..."
+echo "==> Compiling ${APP_NAME} (${ARCH}-apple-macosx${MIN_MACOS})..."
 TMP_BIN="${DIST_DIR}/.${APP_NAME}.tmp"
 swiftc -O -whole-module-optimization \
   -sdk "${SDK_PATH}" \
-  -target arm64-apple-macosx14.0 \
+  -target "${ARCH}-apple-macosx${MIN_MACOS}" \
   "${SOURCES[@]}" \
   -o "${TMP_BIN}"
 
@@ -69,7 +73,7 @@ cat > "${APP_BUNDLE}/Contents/Info.plist" <<EOF
 	<key>CFBundleVersion</key>
 	<string>${BUILD_NUM}</string>
 	<key>LSMinimumSystemVersion</key>
-	<string>14.0</string>
+	<string>${MIN_MACOS}</string>
 	<key>LSUIElement</key>
 	<true/>
 	<key>NSHumanReadableCopyright</key>
@@ -79,13 +83,13 @@ cat > "${APP_BUNDLE}/Contents/Info.plist" <<EOF
 EOF
 
 echo "==> Code-signing ${APP_NAME}.app..."
-codesign --force --deep --sign - --identifier "${BUNDLE_ID}" --entitlements Klipboard/Resources/Klipboard.entitlements "${APP_BUNDLE}"
+codesign --force --deep --sign "${SIGN_IDENTITY}" --identifier "${BUNDLE_ID}" --entitlements Klipboard/Resources/Klipboard.entitlements "${APP_BUNDLE}"
 touch "${APP_BUNDLE}"
 
 echo "==> Creating drag-and-drop DMG installer (${DMG_PATH})..."
 rm -f "${DMG_PATH}" "${ZIP_PATH}"
 
-DMG_TMP="/tmp/klipboard-dmg-staging.$$.noindex"
+DMG_TMP="/tmp/${APP_NAME}-dmg-staging.$$.noindex"
 rm -rf "${DMG_TMP}"
 mkdir -p "${DMG_TMP}"
 cp -R "${APP_BUNDLE}" "${DMG_TMP}/"
@@ -95,7 +99,11 @@ if hdiutil create -volname "${APP_NAME}" -srcfolder "${DMG_TMP}" -ov -format UDZ
   rm -rf "${DMG_TMP}"
 else
   rm -rf "${DMG_TMP}"
-  python3 scripts/build_dmg.py "${APP_BUNDLE}" "${DMG_PATH}"
+  python3 scripts/build_dmg.py "${APP_BUNDLE}" "${DMG_PATH}" "${APP_NAME}"
+fi
+
+if [ -d "docs" ]; then
+  cp -f "${DMG_PATH}" "docs/${APP_NAME}-${VERSION}.dmg"
 fi
 
 echo "==> Done!"

@@ -1,11 +1,12 @@
 cask "klipboard" do
   version "0.1.0"
-  sha256 "54c5205cec87293e127be02f22f624d6fe72f1acd859a1664d8d83f93a7943bd"
+  sha256 :no_check
 
-  url "https://github.com/abhishek/Klipboard/releases/download/v#{version}/Klipboard-#{version}.dmg"
+  repo = ENV.fetch("HOMEBREW_KLIPBOARD_REPO", "akai-49/Klipboard")
+  url "https://github.com/#{repo}/releases/download/v#{version}/Klipboard-#{version}.dmg"
   name "Klipboard"
   desc "Lightweight native macOS clipboard manager with global hotkeys"
-  homepage "https://github.com/abhishek/Klipboard"
+  homepage "https://github.com/#{repo}"
 
   depends_on macos: ">= :sonoma"
 
