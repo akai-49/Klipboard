@@ -10,6 +10,7 @@ BUNDLE_ID="com.abhishek.Klipboard"
 ROOT_DIR="$(cd .. && pwd)"
 DIST_DIR="$(pwd)/dist"
 APP_BUNDLE="${ROOT_DIR}/${APP_NAME}.app"
+DMG_PATH="${DIST_DIR}/${APP_NAME}-${VERSION}.dmg"
 ZIP_PATH="${DIST_DIR}/${APP_NAME}-${VERSION}.zip"
 
 SDK_PATH="$(xcrun --show-sdk-path)"
@@ -81,10 +82,22 @@ echo "==> Code-signing ${APP_NAME}.app..."
 codesign --force --deep --sign - --identifier "${BUNDLE_ID}" --entitlements Klipboard/Resources/Klipboard.entitlements "${APP_BUNDLE}"
 touch "${APP_BUNDLE}"
 
-echo "==> Creating downloadable ZIP (${ZIP_PATH})..."
-rm -f "${ZIP_PATH}"
-(cd "${ROOT_DIR}" && /usr/bin/zip -qry "${ZIP_PATH}" "${APP_NAME}.app")
+echo "==> Creating drag-and-drop DMG installer (${DMG_PATH})..."
+rm -f "${DMG_PATH}" "${ZIP_PATH}"
+
+DMG_TMP="/tmp/klipboard-dmg-staging.$$.noindex"
+rm -rf "${DMG_TMP}"
+mkdir -p "${DMG_TMP}"
+cp -R "${APP_BUNDLE}" "${DMG_TMP}/"
+ln -s /Applications "${DMG_TMP}/Applications"
+
+if hdiutil create -volname "${APP_NAME}" -srcfolder "${DMG_TMP}" -ov -format UDZO "${DMG_PATH}" >/dev/null 2>&1; then
+  rm -rf "${DMG_TMP}"
+else
+  rm -rf "${DMG_TMP}"
+  python3 scripts/build_dmg.py "${APP_BUNDLE}" "${DMG_PATH}"
+fi
 
 echo "==> Done!"
 echo "    App: ${APP_BUNDLE}"
-echo "    ZIP: ${ZIP_PATH}"
+echo "    DMG: ${DMG_PATH}"
