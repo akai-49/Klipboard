@@ -1,0 +1,51 @@
+name: Klipboard
+options:
+  bundleIdPrefix: com.abhishek.Klipboard
+  deploymentTarget:
+    macOS: "14.0"
+targets:
+  Klipboard:
+    type: application
+    platform: macOS
+    sources:
+      - path: Klipboard
+    settings:
+      base:
+        PRODUCT_BUNDLE_IDENTIFIER: com.abhishek.Klipboard
+        MARKETING_VERSION: "0.1.0"
+        CURRENT_PROJECT_VERSION: "1"
+        SWIFT_VERSION: "5.0"
+        ENABLE_HARDENED_RUNTIME: true
+        CODE_SIGN_STYLE: Automatic
+    info:
+      path: Klipboard/Resources/Info.plist
+      properties:
+        LSUIElement: true
+        NSHumanReadableCopyright: ""
+    entitlements:
+      path: Klipboard/Resources/Klipboard.entitlements
+      properties:
+        com.apple.security.app-sandbox: false
+  KlipboardTests:
+    type: bundle.unit-test
+    platform: macOS
+    sources:
+      - path: KlipboardTests
+    dependencies:
+      - target: Klipboard
+    settings:
+      base:
+        SWIFT_VERSION: "5.0"
+        GENERATE_INFOPLIST_FILE: true
+schemes:
+  Klipboard:
+    build:
+      targets:
+        Klipboard: all
+        KlipboardTests: [test]
+    run:
+      config: Debug
+    test:
+      config: Debug
+      targets:
+        - KlipboardTests

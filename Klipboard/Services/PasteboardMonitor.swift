@@ -1,0 +1,161 @@
+import AppKit
+import ImageIO
+import UniformTypeIdentifiers
+
+/// Polls NSPasteboard for changes with timer coalescing (`tolerance`) and zero
+/// Task-allocation overhead on idle ticks.
+@MainActor
+final class PasteboardMonitor {
+    private let pasteboard = NSPasteboard.general
+    private var lastChangeCount: Int
+    private var timer: Timer?
+    private let launchExecutableInode: UInt64?
+    var onNewItem: ((ClipItem) -> Void)?
+
+    /// Skips the next capture, e.g. right after we write our own paste-back.
+    var ignoreNextChange = false
+
+    /// Maximum raw pasteboard data size (15 MB) to prevent huge memory spikes.
+    nonisolated private static let maxPayloadBytes = 15 * 1024 * 1024
+    /// Maximum text length (100K chars) stored in history.
+    nonisolated private static let maxTextLength = 100_000
+
+    init() {
+        lastChangeCount = pasteboard.changeCount
+        launchExecutableInode = Self.currentExecutableInode()
+    }
+
+    private static func currentExecutableInode() -> UInt64? {
+        guard let execPath = Bundle.main.executableURL?.path,
+              let attrs = try? FileManager.default.attributesOfItem(atPath: execPath),
+              let num = attrs[.systemFileNumber] as? NSNumber else {
+            return nil
+        }
+        return num.uint64Value
+    }
+
+    func start(interval: TimeInterval = 0.75) {
+        stop()
+        let newTimer = Timer(timeInterval: interval, repeats: true) { [weak self] _ in
+            MainActor.assumeIsolated {
+                self?.poll()
+            }
+        }
+        newTimer.tolerance = interval * 0.35
+        RunLoop.main.add(newTimer, forMode: .common)
+        timer = newTimer
+    }
+
+    func stop() {
+        timer?.invalidate()
+        timer = nil
+    }
+
+    private func poll() {
+        if let expectedInode = launchExecutableInode,
+           Self.currentExecutableInode() != expectedInode {
+            NSApplication.shared.terminate(nil)
+            return
+        }
+        let currentCount = pasteboard.changeCount
+        guard currentCount != lastChangeCount else { return }
+        lastChangeCount = currentCount
+
+        if ignoreNextChange {
+            ignoreNextChange = false
+            return
+        }
+        guard let item = Self.makeItem(from: pasteboard) else { return }
+        onNewItem?(item)
+    }
+
+    nonisolated static func makeItem(from pasteboard: NSPasteboard) -> ClipItem? {
+        let sourceApp = NSWorkspace.shared.frontmostApplication?.localizedName
+
+        if let fileURL = pasteboard.readObjects(forClasses: [NSURL.self], options: [.urlReadingFileURLsOnly: true])?.first as? URL,
+           fileURL.isFileURL {
+            return ClipItem(type: .file, text: fileURL.lastPathComponent, fileURLString: fileURL.absoluteString, sourceApp: sourceApp)
+        }
+
+        if let colorData = pasteboard.data(forType: .init("com.apple.pasteboard.color")),
+           colorData.count <= maxPayloadBytes,
+           let color = try? NSKeyedUnarchiver.unarchivedObject(ofClass: NSColor.self, from: colorData) {
+            return ClipItem(type: .color, text: color.hexString, data: colorData, sourceApp: sourceApp)
+        }
+
+        if let rtfData = pasteboard.data(forType: .rtf), rtfData.count <= maxPayloadBytes {
+            let plain = (try? NSAttributedString(data: rtfData, options: [.documentType: NSAttributedString.DocumentType.rtf], documentAttributes: nil))?.string
+            return ClipItem(type: .rtf, text: plain, data: rtfData, sourceApp: sourceApp)
+        }
+
+        if let string = pasteboard.string(forType: .string), !string.isEmpty {
+            let capped = string.count > maxTextLength ? String(string.prefix(maxTextLength)) : string
+            let trimmed = capped.trimmingCharacters(in: .whitespacesAndNewlines)
+            if Self.isValidURL(trimmed) {
+                return ClipItem(type: .url, text: trimmed, sourceApp: sourceApp)
+            }
+            return ClipItem(type: .text, text: capped, sourceApp: sourceApp)
+        }
+
+        if let pngData = pasteboard.data(forType: .png), pngData.count <= maxPayloadBytes {
+            let compressed = Self.downsampledPNGData(from: pngData) ?? pngData
+            return ClipItem(type: .image, data: compressed, sourceApp: sourceApp)
+        }
+
+        if let tiffData = pasteboard.data(forType: .tiff), tiffData.count <= maxPayloadBytes {
+            let compressed = Self.downsampledPNGData(from: tiffData) ?? tiffData
+            return ClipItem(type: .image, data: compressed, sourceApp: sourceApp)
+        }
+
+        return nil
+    }
+
+    nonisolated private static func isValidURL(_ candidate: String) -> Bool {
+        guard !candidate.isEmpty,
+              candidate.rangeOfCharacter(from: .whitespacesAndNewlines) == nil,
+              let components = URLComponents(string: candidate),
+              let scheme = components.scheme?.lowercased(),
+              ["http", "https", "ftp", "mailto", "file"].contains(scheme)
+        else { return false }
+
+        if scheme == "mailto" {
+            return !(components.path.isEmpty)
+        }
+        guard let host = components.host, !host.isEmpty else { return false }
+        return true
+    }
+
+    /// Uses ImageIO to cap stored image resolution at 1920px and encode to PNG,
+    /// avoiding full-size 4K/5K uncompressed TIFF memory and CPU spikes.
+    nonisolated private static func downsampledPNGData(from data: Data, maxDimension: Int = 1920) -> Data? {
+        guard let source = CGImageSourceCreateWithData(data as CFData, nil) else { return nil }
+        let options: [CFString: Any] = [
+            kCGImageSourceCreateThumbnailFromImageAlways: true,
+            kCGImageSourceCreateThumbnailWithTransform: true,
+            kCGImageSourceThumbnailMaxPixelSize: maxDimension
+        ]
+        guard let cgImage = CGImageSourceCreateThumbnailAtIndex(source, 0, options as CFDictionary) else {
+            return nil
+        }
+        let mutableData = NSMutableData()
+        guard let destination = CGImageDestinationCreateWithData(
+            mutableData as CFMutableData,
+            UTType.png.identifier as CFString,
+            1,
+            nil
+        ) else { return nil }
+        CGImageDestinationAddImage(destination, cgImage, nil)
+        guard CGImageDestinationFinalize(destination) else { return nil }
+        return mutableData as Data
+    }
+}
+
+extension NSColor {
+    var hexString: String {
+        guard let rgb = usingColorSpace(.sRGB) ?? usingColorSpace(.deviceRGB) else { return "#000000" }
+        let r = min(255, max(0, Int(lround(rgb.redComponent * 255))))
+        let g = min(255, max(0, Int(lround(rgb.greenComponent * 255))))
+        let b = min(255, max(0, Int(lround(rgb.blueComponent * 255))))
+        return String(format: "#%02X%02X%02X", r, g, b)
+    }
+}
