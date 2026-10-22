@@ -85,6 +85,7 @@ EOF
 echo "==> Code-signing ${APP_NAME}.app..."
 codesign --force --deep --sign "${SIGN_IDENTITY}" --identifier "${BUNDLE_ID}" --entitlements Klipboard/Resources/Klipboard.entitlements "${APP_BUNDLE}"
 touch "${APP_BUNDLE}"
+/System/Library/Frameworks/CoreServices.framework/Frameworks/LaunchServices.framework/Support/lsregister -f "${APP_BUNDLE}" 2>/dev/null || true
 
 echo "==> Creating drag-and-drop DMG installer (${DMG_PATH})..."
 rm -f "${DMG_PATH}" "${ZIP_PATH}"
