@@ -18,26 +18,36 @@
 
 ## Installation
 
-### Option 1: Drag-and-Drop DMG Installer (Recommended)
+### Option 1: 1-Line Terminal Installer (Recommended — No Gatekeeper Popup)
 
-1. Download **`Klipboard-0.1.0.dmg`** from [**GitHub Releases**](https://github.com/akai-49/Klipboard/releases/latest) (or [`dist/Klipboard-0.1.0.dmg`](dist/Klipboard-0.1.0.dmg)).
+Downloads the DMG, installs `Klipboard.app` to `/Applications`, clears the macOS quarantine attribute automatically, and launches Klipboard:
+
+```bash
+curl -fsSL https://klipboard-beryl.vercel.app/install.sh | bash
+```
+
+### Option 2: Drag-and-Drop DMG Installer
+
+1. Download **`Klipboard-0.1.0.dmg`** from [**klipboard-beryl.vercel.app**](https://klipboard-beryl.vercel.app/Klipboard-0.1.0.dmg) or [**GitHub Releases**](https://github.com/akai-49/Klipboard/releases/latest).
 2. Double-click **`Klipboard-0.1.0.dmg`** to mount the installer volume.
 3. Drag **`Klipboard.app`** onto the **`Applications`** folder shortcut.
-4. Launch **Klipboard** from `/Applications` or Spotlight (`⌘Space`).
-   - *First-launch note (ad-hoc signed build)*: If macOS Gatekeeper prompts on first open, run:
+4. **If macOS shows `"Klipboard" Not Opened`** (because this open-source build is ad-hoc signed rather than notarized with a paid Apple Developer ID):
+   - **Fastest fix (Terminal)**:
      ```bash
-     xattr -cr /Applications/Klipboard.app
+     xattr -cr /Applications/Klipboard.app && open /Applications/Klipboard.app
      ```
-     or go to **System Settings → Privacy & Security → Open Anyway**.
-   - Grant **Accessibility** permission when prompted so Klipboard can listen for global shortcuts and paste directly into your active window.
+   - **No-Terminal fix (System Settings)**:
+     1. Click **Done** on the popup (do **not** click *Move to Trash*).
+     2. Open **System Settings → Privacy & Security**, scroll down to the **Security** section, and click **Open Anyway** next to *"Klipboard" was blocked to protect your Mac*.
+5. Grant **Accessibility** permission when prompted so Klipboard can listen for global shortcuts and paste directly into your active window.
 
-### Option 2: Homebrew Cask
+### Option 3: Homebrew Cask
 
 ```bash
 brew install --cask --no-quarantine ./Casks/klipboard.rb
 ```
 
-### Option 3: Build from Source
+### Option 4: Build from Source
 
 Requires macOS 14.0+ and Xcode Command Line Tools (`xcode-select --install`).
 

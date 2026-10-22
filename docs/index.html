@@ -1027,19 +1027,22 @@
 
       <div id="install" class="box-panel">
         <h3>Installation</h3>
-        <p class="sub">Packaged as a standard drag-and-drop macOS Disk Image.</p>
+        <p class="sub">Install in one command (skips Gatekeeper popup) or via the drag-and-drop DMG.</p>
+        <div style="font-size: 12px; font-weight: 600; color: var(--text); margin-bottom: 6px;">Option A — 1-Line Terminal Install (Recommended, No Gatekeeper Warning)</div>
+        <div class="terminal-box" style="margin-top: 0; margin-bottom: 18px;">
+          <span id="curl-cmd" style="overflow-x: auto; white-space: nowrap;">curl -fsSL https://klipboard-beryl.vercel.app/install.sh | bash</span>
+          <button class="copy-btn" id="copy-curl" type="button">Copy</button>
+        </div>
+        <div style="font-size: 12px; font-weight: 600; color: var(--text); margin-bottom: 10px;">Option B — Drag-and-Drop DMG Installer</div>
         <ol class="install-steps">
           <li>Download <a href="Klipboard-0.1.0.dmg" style="color: var(--text); text-decoration: underline;" download>Klipboard-0.1.0.dmg</a> (1.3 MB) and open the disk image.</li>
           <li>Drag <strong>Klipboard.app</strong> into the <strong>Applications</strong> folder shortcut.</li>
-          <li>Launch <strong>Klipboard</strong> from Applications and grant Accessibility permission when prompted so Klipboard can paste directly into your active window.</li>
+          <li>If macOS shows <strong>“Klipboard” Not Opened</strong>, either click <strong>Done</strong> → <strong>System Settings → Privacy &amp; Security → Open Anyway</strong>, or run once in Terminal:</li>
         </ol>
         <div class="terminal-box">
-          <span id="xattr-cmd">xattr -cr /Applications/Klipboard.app</span>
+          <span id="xattr-cmd" style="overflow-x: auto; white-space: nowrap;">xattr -cr /Applications/Klipboard.app &amp;&amp; open /Applications/Klipboard.app</span>
           <button class="copy-btn" id="copy-xattr" type="button">Copy</button>
         </div>
-        <p style="font-size: 11.5px; color: var(--text-muted); margin-top: 8px;">
-          If macOS Gatekeeper warns on first launch (ad-hoc signed open-source build), run the command above once in Terminal.
-        </p>
       </div>
     </section>
   </main>
@@ -1111,13 +1114,13 @@
           id: 5,
           type: 'text',
           badge: 'TXT',
-          title: 'curl -fsSL https://klipboard-beryl.vercel.app/Klipboard-0.1.0.dmg -O',
+          title: 'curl -fsSL https://klipboard-beryl.vercel.app/install.sh | bash',
           sub: 'Ghostty · 19m ago',
           shortcut: '⌘5',
           sourceApp: 'Ghostty',
-          chars: '68 chars',
+          chars: '63 chars',
           captured: '19m ago',
-          content: 'curl -fsSL https://klipboard-beryl.vercel.app/Klipboard-0.1.0.dmg -O && open Klipboard-0.1.0.dmg'
+          content: 'curl -fsSL https://klipboard-beryl.vercel.app/install.sh | bash'
         }
       ];
 
@@ -1193,9 +1196,18 @@
 
       searchEl.addEventListener('input', render);
 
+      const copyCurlBtn = document.getElementById('copy-curl');
+      if (copyCurlBtn) {
+        copyCurlBtn.addEventListener('click', () => {
+          navigator.clipboard.writeText('curl -fsSL https://klipboard-beryl.vercel.app/install.sh | bash');
+          copyCurlBtn.textContent = 'Copied';
+          setTimeout(() => { copyCurlBtn.textContent = 'Copy'; }, 1600);
+        });
+      }
+
       const copyBtn = document.getElementById('copy-xattr');
       copyBtn.addEventListener('click', () => {
-        navigator.clipboard.writeText('xattr -cr /Applications/Klipboard.app');
+        navigator.clipboard.writeText('xattr -cr /Applications/Klipboard.app && open /Applications/Klipboard.app');
         copyBtn.textContent = 'Copied';
         setTimeout(() => { copyBtn.textContent = 'Copy'; }, 1600);
       });
