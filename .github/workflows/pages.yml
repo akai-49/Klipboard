@@ -17,22 +17,33 @@ concurrency:
 
 jobs:
   deploy:
-    environment:
-      name: github-pages
-      url: ${{ steps.deployment.outputs.page_url }}
     runs-on: ubuntu-latest
     steps:
       - name: Checkout
         uses: actions/checkout@v4
 
       - name: Configure Pages
+        id: configure
+        continue-on-error: true
         uses: actions/configure-pages@v5
+        with:
+          enablement: true
 
       - name: Upload artifact
+        if: steps.configure.outcome == 'success'
         uses: actions/upload-pages-artifact@v3
         with:
           path: 'docs'
 
       - name: Deploy to GitHub Pages
+        if: steps.configure.outcome == 'success'
         id: deployment
         uses: actions/deploy-pages@v4
+
+      - name: Pages Setup Notice
+        if: steps.configure.outcome != 'success'
+        run: |
+          echo "### GitHub Pages Needs One-Time Activation in Repo Settings" >> $GITHUB_STEP_SUMMARY
+          echo "1. Make sure the repository is **Public** (or on a GitHub Pro account)." >> $GITHUB_STEP_SUMMARY
+          echo "2. Open **Settings → Pages**: https://github.com/${GITHUB_REPOSITORY}/settings/pages" >> $GITHUB_STEP_SUMMARY
+          echo "3. Under **Build and deployment → Source**, select **GitHub Actions** (or **Deploy from a branch → main / /docs**)." >> $GITHUB_STEP_SUMMARY

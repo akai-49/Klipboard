@@ -2,6 +2,8 @@ name: Build & Publish Klipboard DMG
 
 on:
   push:
+    branches:
+      - main
     tags:
       - 'v*'
   workflow_dispatch:
@@ -19,9 +21,10 @@ jobs:
       - name: Build Klipboard.app and drag-and-drop DMG
         run: ./build-release.sh
 
-      - name: Upload DMG to GitHub Release
-        if: startsWith(github.ref, 'refs/tags/')
+      - name: Publish DMG to GitHub Releases (v0.1.0)
         uses: softprops/action-gh-release@v2
         with:
+          tag_name: v0.1.0
+          name: Klipboard v0.1.0
           files: dist/Klipboard-*.dmg
           generate_release_notes: true
