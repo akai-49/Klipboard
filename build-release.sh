@@ -83,7 +83,16 @@ cat > "${APP_BUNDLE}/Contents/Info.plist" <<EOF
 EOF
 
 echo "==> Code-signing ${APP_NAME}.app..."
-codesign --force --deep --sign "${SIGN_IDENTITY}" --identifier "${BUNDLE_ID}" --entitlements Klipboard/Resources/Klipboard.entitlements "${APP_BUNDLE}"
+REQ_ARGS=()
+if [ "${SIGN_IDENTITY}" != "-" ]; then
+    # Pin the designated requirement to the signing cert. codesign's auto-generated one
+    # can come out unsatisfiable, which makes TCC ignore the Accessibility grant.
+    # ponytail: re-grant Accessibility once when the cert is renewed (hash changes).
+    CERT_HASH=$(security find-identity -v -p codesigning | grep -F "${SIGN_IDENTITY}" | head -1 | awk '{print $2}')
+    REQ_ARGS=(-r="designated => identifier \"${BUNDLE_ID}\" and certificate leaf = H\"${CERT_HASH}\"")
+fi
+codesign --force --deep --sign "${SIGN_IDENTITY}" --identifier "${BUNDLE_ID}" ${REQ_ARGS[@]+"${REQ_ARGS[@]}"} --entitlements Klipboard/Resources/Klipboard.entitlements "${APP_BUNDLE}"
+codesign --verify --strict "${APP_BUNDLE}"
 touch "${APP_BUNDLE}"
 /System/Library/Frameworks/CoreServices.framework/Frameworks/LaunchServices.framework/Support/lsregister -f "${APP_BUNDLE}" 2>/dev/null || true
 

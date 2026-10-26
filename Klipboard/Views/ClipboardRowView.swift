@@ -96,7 +96,7 @@ struct ClipboardRowView: View {
         if let cached = Self.thumbnailCache.object(forKey: key) {
             return cached
         }
-        guard let data = item.data as CFData?,
+        guard let data = item.payload as CFData?,
               let source = CGImageSourceCreateWithData(data, nil)
         else { return nil }
 

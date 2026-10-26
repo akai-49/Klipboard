@@ -10,9 +10,22 @@ final class ClipItem: Identifiable, Codable, Equatable {
 
     /// Plain-text form used for search and for text/url/color previews.
     var text: String?
-    /// Raw payload for rtf/image/file (RTF data, image data, or file URL string).
+    /// Raw payload for rtf/color, and for images until the store offloads them to disk.
     var data: Data?
+    /// File name under `imagesFolder` once image bytes are offloaded (keeps RAM and JSON small).
+    var imageFile: String?
     var fileURLString: String?
+
+    static let imagesFolder: URL = {
+        let appSupport = FileManager.default.urls(for: .applicationSupportDirectory, in: .userDomainMask).first
+            ?? URL(fileURLWithPath: NSTemporaryDirectory())
+        return appSupport.appendingPathComponent("Klipboard/images", isDirectory: true)
+    }()
+
+    /// Payload bytes, read from disk for offloaded images.
+    var payload: Data? {
+        data ?? imageFile.flatMap { try? Data(contentsOf: Self.imagesFolder.appendingPathComponent($0)) }
+    }
 
     init(
         type: ClipboardType,

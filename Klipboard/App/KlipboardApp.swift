@@ -5,7 +5,11 @@ import Darwin
 @main
 enum KlipboardApp {
     static func main() {
+        #if DEBUG
         ensureSingleInstanceAndCleanDerivedData()
+        #else
+        replaceOtherInstances()
+        #endif
 
         let app = NSApplication.shared
         let delegate = MainActor.assumeIsolated { AppDelegate() }
@@ -14,7 +18,22 @@ enum KlipboardApp {
         app.run()
     }
 
-    /// Ensures only one Klipboard instance runs at a time and cleans up any iconless
+    /// Release builds: politely quit older copies of *this* app (same bundle ID) so the
+    /// newest build owns the hotkey. Never kills or deletes anything else.
+    private static func replaceOtherInstances() {
+        guard let bundleID = Bundle.main.bundleIdentifier else { return }
+        let myPID = ProcessInfo.processInfo.processIdentifier
+        let others = NSRunningApplication.runningApplications(withBundleIdentifier: bundleID)
+            .filter { $0.processIdentifier != myPID }
+        guard !others.isEmpty else { return }
+        others.forEach { $0.terminate() }
+        // Give them up to 1s to exit and release the global hotkey.
+        for _ in 0..<20 where others.contains(where: { !$0.isTerminated }) {
+            usleep(50_000)
+        }
+    }
+
+    /// Debug only: ensures only one Klipboard instance runs at a time and cleans up any iconless
     /// Xcode DerivedData builds so Spotlight only shows the active app bundle.
     private static func ensureSingleInstanceAndCleanDerivedData() {
         let myPID = ProcessInfo.processInfo.processIdentifier

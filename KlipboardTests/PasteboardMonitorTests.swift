@@ -17,6 +17,15 @@ final class PasteboardMonitorTests: XCTestCase {
         XCTAssertEqual(item?.text, "hello world")
     }
 
+    func testSkipsPasswordManagerContent() {
+        let pb = scratchPasteboard()
+        pb.clearContents()
+        pb.declareTypes([.string, .init("org.nspasteboard.ConcealedType")], owner: nil)
+        pb.setString("hunter2", forType: .string)
+
+        XCTAssertNil(PasteboardMonitor.makeItem(from: pb))
+    }
+
     func testDetectsURL() {
         let pb = scratchPasteboard()
         pb.clearContents()

@@ -1,4 +1,5 @@
 import AppKit
+import ServiceManagement
 
 @MainActor
 final class AppCoordinator: NSObject, ObservableObject {
@@ -23,6 +24,18 @@ final class AppCoordinator: NSObject, ObservableObject {
         setupStatusItem()
         hotkey.onTrigger = { [weak self] in self?.togglePanel() }
         hotkey.start()
+        PasteboardWriter.ensureAccessibility(prompt: true)
+
+        // First run: enable launch-at-login and show the panel once. Later launches
+        // (e.g. at login) stay silent in the menu bar and respect the user's toggle.
+        let defaults = UserDefaults.standard
+        let isTestHost = ProcessInfo.processInfo.environment["XCTestConfigurationFilePath"] != nil
+        if !isTestHost, !defaults.bool(forKey: "didFirstLaunch") {
+            defaults.set(true, forKey: "didFirstLaunch")
+            try? SMAppService.mainApp.register()
+            rebuildMenu()
+            showPanel()
+        }
     }
 
     private func setupStatusItem() {
@@ -69,6 +82,15 @@ final class AppCoordinator: NSObject, ObservableObject {
         shortcutRoot.submenu = shortcutMenu
         menu.addItem(shortcutRoot)
 
+        let loginItem = NSMenuItem(
+            title: "Launch at Login",
+            action: #selector(handleToggleLaunchAtLogin),
+            keyEquivalent: ""
+        )
+        loginItem.target = self
+        loginItem.state = SMAppService.mainApp.status == .enabled ? .on : .off
+        menu.addItem(loginItem)
+
         menu.addItem(.separator())
 
         let quitItem = NSMenuItem(
@@ -91,6 +113,19 @@ final class AppCoordinator: NSObject, ObservableObject {
         guard let raw = sender.representedObject as? String,
               let shortcut = HotkeyShortcut(rawValue: raw) else { return }
         setShortcut(shortcut)
+    }
+
+    @objc private func handleToggleLaunchAtLogin() {
+        let service = SMAppService.mainApp
+        if service.status == .enabled {
+            try? service.unregister()
+        } else {
+            try? service.register()
+            if service.status == .requiresApproval {
+                SMAppService.openSystemSettingsLoginItems()
+            }
+        }
+        rebuildMenu()
     }
 
     @objc private func handleQuit() {
@@ -126,7 +161,11 @@ final class AppCoordinator: NSObject, ObservableObject {
         panel?.showCentered()
     }
 
-    private func restorePreviousAppFocus() {
+    @discardableResult
+    private func restorePreviousAppFocus() -> NSRunningApplication? {
+        // Hiding hands activation back immediately; activate() alone is async and can lag.
+        NSApp.hide(nil)
         previousApp?.activate()
+        return previousApp
     }
 }

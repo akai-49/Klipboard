@@ -12,7 +12,8 @@ final class ClipboardViewModel: ObservableObject {
     @Published private(set) var filteredItems: [ClipItem] = []
     @Published var selectedIndex: Int = 0
 
-    var onRestoreFocus: (() -> Void)?
+    /// Re-activates the app that was frontmost before the panel opened and returns it.
+    var onRestoreFocus: (() -> NSRunningApplication?)?
 
     private let store: ClipboardStore
     private let monitor = PasteboardMonitor()
@@ -45,8 +46,7 @@ final class ClipboardViewModel: ObservableObject {
            last.type == item.type,
            last.text == item.text,
            last.fileURLString == item.fileURLString,
-           last.data?.count == item.data?.count,
-           last.data == item.data {
+           last.payload == item.payload {
             return
         }
         store.insert(item)
@@ -78,10 +78,10 @@ final class ClipboardViewModel: ObservableObject {
         monitor.ignoreNextChange = true
         PasteboardWriter.write(item)
         dismiss()
-        onRestoreFocus?()
-        DispatchQueue.main.asyncAfter(deadline: .now() + 0.12) {
-            PasteboardWriter.simulatePaste()
-        }
+        let target = onRestoreFocus?()
+        // Without permission the item stays on the pasteboard; user can ⌘V manually.
+        guard PasteboardWriter.ensureAccessibility(prompt: true) else { return }
+        PasteboardWriter.paste(into: target)
     }
 
     private func clampSelection() {
