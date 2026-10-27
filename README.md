@@ -34,8 +34,8 @@ curl -fsSL https://klipboard-beryl.vercel.app/install.sh | bash
 
 ### Option 2: Drag-and-Drop DMG Installer
 
-1. Download **`Klipboard-0.1.0.dmg`** from [**klipboard-beryl.vercel.app**](https://klipboard-beryl.vercel.app/Klipboard-0.1.0.dmg) or [**GitHub Releases**](https://github.com/akai-49/Klipboard/releases/latest).
-2. Double-click **`Klipboard-0.1.0.dmg`** to mount the installer volume.
+1. Download **`Klipboard.dmg`** from [**klipboard-beryl.vercel.app**](https://klipboard-beryl.vercel.app/Klipboard.dmg) or [**GitHub Releases**](https://github.com/akai-49/Klipboard/releases/latest).
+2. Double-click **`Klipboard.dmg`** to mount the installer volume.
 3. Drag **`Klipboard.app`** onto the **`Applications`** folder shortcut.
 4. **If macOS shows `"Klipboard" Not Opened`** (because this open-source build is ad-hoc signed rather than notarized with a paid Apple Developer ID):
    - **Fastest fix (Terminal)**:

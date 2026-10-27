@@ -113,7 +113,7 @@ else
 fi
 
 if [ -d "docs" ]; then
-  cp -f "${DMG_PATH}" "docs/${APP_NAME}-${VERSION}.dmg"
+  cp -f "${DMG_PATH}" "docs/${APP_NAME}.dmg"
 fi
 
 echo "==> Done!"

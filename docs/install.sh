@@ -5,7 +5,7 @@ APP_NAME="Klipboard"
 VERSION="${KLIPBOARD_VERSION:-0.1.0}"
 INSTALL_DIR="/Applications"
 APP_DEST="${INSTALL_DIR}/${APP_NAME}.app"
-DMG_URL="${KLIPBOARD_DMG_URL:-https://klipboard-beryl.vercel.app/${APP_NAME}-${VERSION}.dmg}"
+DMG_URL="${KLIPBOARD_DMG_URL:-https://klipboard-beryl.vercel.app/${APP_NAME}.dmg}"
 FALLBACK_URL="https://github.com/akai-49/Klipboard/releases/download/v${VERSION}/${APP_NAME}-${VERSION}.dmg"
 
 TMP_DIR="$(mktemp -d "/tmp/klipboard-install.XXXXXX")"
