@@ -2,6 +2,8 @@
 
 **Klipboard** is a fast, lightweight native macOS clipboard manager built with Swift and AppKit/SwiftUI. It lives quietly in your menu bar, captures text, rich text (RTF), links, images, files, and colors with near-zero idle CPU/memory overhead, and opens instantly from anywhere via a Spotlight-style floating panel.
 
+<p align="center"><img src="docs/screenshot-panel.png" alt="Klipboard panel showing clipboard history" width="650"></p>
+
 ## Features
 
 - **Instant Global Shortcut**: Press **`⌥V` (Option + V)** or **`⌘⇧V` (Command + Shift + V)** from any app to toggle the floating clipboard history panel.
@@ -88,6 +90,8 @@ tccutil reset All com.abhishek.Klipboard
 ```
 
 ## Menu Bar
+
+<p align="center"><img src="docs/screenshot-menu.png" alt="Klipboard menu bar menu" width="470"></p>
 
 | Item | Action |
 | :--- | :--- |
