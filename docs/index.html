@@ -3,8 +3,8 @@
 <head>
   <meta charset="UTF-8" />
   <meta name="viewport" content="width=device-width, initial-scale=1.0" />
-  <title>Klipboard — Native Clipboard Manager for macOS</title>
-  <meta name="description" content="A fast, native Swift & AppKit clipboard manager for macOS 14+. Summon with Option+V, filter across text, links, colors, images, and files." />
+  <title>Klipboard — Clipboard History for Mac</title>
+  <meta name="description" content="Klipboard remembers everything you copy on your Mac. Press Option+V to find it again and paste it anywhere." />
   <link rel="icon" type="image/png" href="icon.png" />
   <style>
     :root {
@@ -99,16 +99,6 @@
       box-shadow: 0 2px 8px rgba(0, 0, 0, 0.5);
     }
 
-    .version-tag {
-      font-family: var(--mono);
-      font-size: 11px;
-      color: var(--text-muted);
-      background: rgba(255, 255, 255, 0.05);
-      border: 1px solid var(--border);
-      padding: 2px 7px;
-      border-radius: 4px;
-      font-weight: 500;
-    }
 
     .nav-links {
       display: flex;
@@ -127,22 +117,7 @@
       color: var(--text);
     }
 
-    .nav-cta {
-      display: inline-flex;
-      align-items: center;
-      gap: 6px;
-      background: var(--text);
-      color: #09090b !important;
-      font-weight: 500;
-      font-size: 13px !important;
-      padding: 6px 13px;
-      border-radius: 7px;
-      transition: opacity 0.15s ease !important;
-    }
 
-    .nav-cta:hover {
-      opacity: 0.9;
-    }
 
     /* Main Container */
     main {
@@ -236,14 +211,6 @@
       transform: translateY(-1px);
     }
 
-    .btn-download .dmg-meta {
-      font-family: var(--mono);
-      font-size: 11.5px;
-      font-weight: 500;
-      color: #52525b;
-      padding-left: 8px;
-      border-left: 1px solid #d4d4d8;
-    }
 
     .btn-ghost {
       display: inline-flex;
@@ -281,269 +248,32 @@
       gap: 6px;
     }
 
-    /* Interactive macOS NSPanel Stage */
-    .stage-wrapper {
-      margin-top: 20px;
+
+    /* App screenshot */
+    .shot {
+      margin: 8px auto 0;
+      max-width: 860px;
+    }
+
+    .shot img {
+      display: block;
+      width: 100%;
+      height: auto;
       border-radius: 16px;
-      padding: 36px 28px 28px;
-      background:
-        radial-gradient(120% 90% at 15% 10%, rgba(28, 38, 66, 0.55) 0%, rgba(12, 13, 18, 0.95) 65%),
-        linear-gradient(180deg, #12131a 0%, #0b0b0e 100%);
       border: 1px solid var(--border-strong);
       box-shadow: 0 30px 90px rgba(0, 0, 0, 0.65);
-      position: relative;
-      overflow: hidden;
     }
 
-    .stage-caption {
-      display: flex;
-      justify-content: space-between;
-      align-items: center;
-      margin-bottom: 18px;
-      font-size: 12px;
-      color: var(--text-muted);
-      font-family: var(--mono);
-    }
-
-    /* Simulated NSPanel */
-    .nspanel {
-      max-width: 860px;
-      margin: 0 auto;
-      background: rgba(24, 24, 29, 0.92);
-      backdrop-filter: blur(30px);
-      -webkit-backdrop-filter: blur(30px);
-      border: 1px solid rgba(255, 255, 255, 0.16);
-      border-radius: 13px;
-      box-shadow:
-        0 24px 60px rgba(0, 0, 0, 0.75),
-        inset 0 1px 0 rgba(255, 255, 255, 0.12);
-      overflow: hidden;
-      display: flex;
-      flex-direction: column;
-    }
-
-    .panel-search-bar {
-      display: flex;
-      align-items: center;
-      gap: 12px;
-      padding: 13px 16px;
-      border-bottom: 1px solid rgba(255, 255, 255, 0.08);
-    }
-
-    .panel-search-icon {
-      color: var(--text-muted);
-      flex-shrink: 0;
-    }
-
-    .panel-search-input {
-      background: transparent;
-      border: none;
-      outline: none;
-      color: var(--text);
-      font-family: var(--sans);
-      font-size: 15px;
-      width: 100%;
-    }
-
-    .panel-search-input::placeholder {
-      color: var(--text-muted);
-    }
-
-    .panel-Count-badge {
-      font-family: var(--mono);
-      font-size: 11px;
-      color: var(--text-muted);
-      white-space: nowrap;
-      padding: 2px 7px;
-      background: rgba(255, 255, 255, 0.05);
-      border-radius: 5px;
-    }
-
-
-    .panel-body {
-      display: grid;
-      grid-template-columns: 1.05fr 0.95fr;
-      min-height: 310px;
-    }
-
-    .clip-list {
-      border-right: 1px solid rgba(255, 255, 255, 0.08);
-      padding: 6px;
-      display: flex;
-      flex-direction: column;
-      gap: 2px;
-    }
-
-    .clip-row {
-      display: flex;
-      align-items: center;
-      justify-content: space-between;
-      gap: 10px;
-      padding: 8px 10px;
-      border-radius: 7px;
-      cursor: pointer;
-      user-select: none;
-      transition: background 0.08s ease;
-    }
-
-    .clip-row:hover {
-      background: rgba(255, 255, 255, 0.05);
-    }
-
-    .clip-row.selected {
-      background: var(--selection);
-      color: #ffffff;
-    }
-
-    .clip-row-left {
-      display: flex;
-      align-items: center;
-      gap: 10px;
-      min-width: 0;
-    }
-
-    .clip-type-icon {
-      width: 24px;
-      height: 24px;
-      border-radius: 5px;
-      background: rgba(255, 255, 255, 0.07);
-      display: flex;
-      align-items: center;
-      justify-content: center;
-      font-family: var(--mono);
-      font-size: 11px;
-      color: var(--text-secondary);
-      flex-shrink: 0;
-    }
-
-    .clip-row.selected .clip-type-icon {
-      background: rgba(255, 255, 255, 0.2);
-      color: #fff;
-    }
-
-    .color-chip {
-      width: 16px;
-      height: 16px;
-      border-radius: 4px;
-      border: 1px solid rgba(255, 255, 255, 0.35);
-    }
-
-    .clip-title {
-      font-size: 13px;
-      font-weight: 500;
-      white-space: nowrap;
-      overflow: hidden;
-      text-overflow: ellipsis;
-    }
-
-    .clip-sub {
-      font-size: 11px;
-      color: var(--text-muted);
-    }
-
-    .clip-row.selected .clip-sub {
-      color: rgba(255, 255, 255, 0.75);
-    }
-
-
-
-    /* Right Inspector Pane */
-    .clip-inspector {
-      padding: 16px 18px;
-      display: flex;
-      flex-direction: column;
-      justify-content: space-between;
-      background: rgba(0, 0, 0, 0.14);
-    }
-
-    .inspector-content {
-      font-family: var(--mono);
-      font-size: 12px;
-      line-height: 1.6;
-      color: #e4e4e7;
-      background: rgba(0, 0, 0, 0.32);
-      border: 1px solid rgba(255, 255, 255, 0.07);
-      border-radius: 8px;
-      padding: 12px;
-      white-space: pre-wrap;
-      word-break: break-word;
-      min-height: 165px;
-    }
-
-    .inspector-meta {
+    .shot figcaption {
       margin-top: 14px;
-      border-top: 1px solid rgba(255, 255, 255, 0.07);
-      padding-top: 10px;
-      display: grid;
-      grid-template-columns: repeat(2, 1fr);
-      gap: 6px 12px;
-      font-size: 11.5px;
-    }
-
-    .meta-pair {
-      display: flex;
-      justify-content: space-between;
-    }
-
-    .meta-label {
-      color: var(--text-muted);
-    }
-
-    .meta-val {
-      font-family: var(--mono);
-      color: var(--text-secondary);
-    }
-
-    .panel-footer {
-      padding: 8px 14px;
-      background: rgba(0, 0, 0, 0.35);
-      border-top: 1px solid rgba(255, 255, 255, 0.07);
-      display: flex;
-      align-items: center;
-      justify-content: space-between;
-      font-size: 11.5px;
-      color: var(--text-muted);
-      font-family: var(--mono);
-    }
-
-    .footer-hints {
-      display: flex;
-      gap: 14px;
-      flex-wrap: wrap;
-    }
-
-    /* Metrics Strip */
-    .metrics-strip {
-      display: grid;
-      grid-template-columns: repeat(4, 1fr);
-      border-top: 1px solid var(--border);
-      border-bottom: 1px solid var(--border);
-      margin: 64px 0;
-    }
-
-    .metric-cell {
-      padding: 28px 24px;
-      border-right: 1px solid var(--border);
-    }
-
-    .metric-cell:last-child {
-      border-right: none;
-    }
-
-    .metric-value {
-      font-family: var(--mono);
-      font-size: 1.75rem;
-      font-weight: 600;
-      letter-spacing: -0.03em;
-      color: var(--text);
-      margin-bottom: 4px;
-    }
-
-    .metric-label {
+      text-align: center;
       font-size: 13px;
-      color: var(--text-secondary);
+      color: var(--text-muted);
     }
 
+    #features {
+      margin-top: 96px;
+    }
     /* Section Headers */
     .section-head {
       margin-bottom: 32px;
@@ -593,11 +323,6 @@
       border-bottom: none;
     }
 
-    .bento-tag {
-      font-family: var(--mono);
-      font-size: 11px;
-      color: var(--text-muted);
-    }
 
     .bento-item h3 {
       font-size: 15.5px;
@@ -621,6 +346,7 @@
     }
 
     .box-panel {
+      min-width: 0;
       background: var(--bg-elevated);
       border: 1px solid var(--border);
       border-radius: 12px;
@@ -708,6 +434,10 @@
       color: #d4d4d8;
     }
 
+    .terminal-box span {
+      min-width: 0;
+    }
+
     .copy-btn {
       background: rgba(255, 255, 255, 0.07);
       border: 1px solid var(--border);
@@ -751,17 +481,8 @@
       color: var(--text);
     }
 
+
     @media (max-width: 820px) {
-      .panel-body {
-        grid-template-columns: 1fr;
-      }
-      .clip-list {
-        border-right: none;
-        border-bottom: 1px solid rgba(255, 255, 255, 0.08);
-      }
-      .metrics-strip {
-        grid-template-columns: repeat(2, 1fr);
-      }
       .bento-grid {
         grid-template-columns: 1fr;
       }
@@ -772,7 +493,7 @@
       .split-section {
         grid-template-columns: 1fr;
       }
-      .nav-links a:not(.nav-cta) {
+      .nav-links a:not(:last-child) {
         display: none;
       }
     }
@@ -786,15 +507,12 @@
       <a href="#" class="brand">
         <img src="icon.png" alt="Klipboard icon" />
         <span>Klipboard</span>
-        <span class="version-tag">v0.1.0</span>
       </a>
       <nav class="nav-links">
-        <a href="#preview">Interface</a>
-        <a href="#architecture">Architecture</a>
+        <a href="#features">Features</a>
         <a href="#shortcuts">Shortcuts</a>
         <a href="#install">Install</a>
-        <a id="nav-repo" href="https://github.com/akai-49/Klipboard">GitHub</a>
-        <a href="Klipboard-0.1.0.dmg" class="nav-cta" download>Download .dmg</a>
+        <a href="https://github.com/akai-49/Klipboard">GitHub</a>
       </nav>
     </div>
   </header>
@@ -803,165 +521,104 @@
     <section class="hero">
       <div class="eyebrow">
         <span class="status-dot"></span>
-        <span>NATIVE SWIFT &amp; APPKIT UTILITY FOR MACOS 14+</span>
+        <span>FREE FOR MAC · MACOS 14+</span>
       </div>
       <h1>Clipboard history that feels built into macOS.</h1>
       <p class="hero-lead">
-        Press <kbd>⌥V</kbd> or <kbd>⌘⇧V</kbd> in any application to summon a non-activating Spotlight panel. Search across plain text, rich text, URLs, hex colors, images, and Finder files—then hit <kbd>↵</kbd> to paste directly into your active window.
+        Klipboard remembers everything you copy. Press <kbd>⌥V</kbd> anywhere, find what you need, and click it — it's pasted right where you were typing.
       </p>
       <div class="hero-actions">
-        <a id="download-btn" href="Klipboard-0.1.0.dmg" class="btn-download" download>
+        <a id="download" href="Klipboard-0.1.0.dmg" class="btn-download" download>
           <svg width="16" height="16" viewBox="0 0 16 16" fill="none" aria-hidden="true">
             <path d="M8 2v8.5M8 10.5L4.75 7.25M8 10.5l3.25-3.25M2.75 13.25h10.5" stroke="currentColor" stroke-width="1.6" stroke-linecap="round" stroke-linejoin="round"/>
           </svg>
           <span>Download Klipboard</span>
-          <span class="dmg-meta">v0.1.0 · 1.6 MB</span>
         </a>
-        <a id="repo-btn" href="https://github.com/akai-49/Klipboard" class="btn-ghost">
+        <a href="https://github.com/akai-49/Klipboard" class="btn-ghost">
           <svg width="16" height="16" viewBox="0 0 16 16" fill="currentColor" aria-hidden="true">
             <path d="M8 0C3.58 0 0 3.58 0 8c0 3.54 2.29 6.53 5.47 7.59.4.07.55-.17.55-.38 0-.19-.01-.82-.01-1.49-2.01.37-2.53-.49-2.69-.94-.09-.23-.48-.94-.82-1.13-.28-.15-.68-.52-.01-.53.63-.01 1.08.58 1.23.82.72 1.21 1.87.87 2.33.66.07-.52.28-.87.51-1.07-1.78-.2-3.64-.89-3.64-3.95 0-.87.31-1.59.82-2.15-.08-.2-.36-1.02.08-2.12 0 0 .67-.21 2.2.82.64-.18 1.32-.27 2-.27.68 0 1.36.09 2 .27 1.53-1.04 2.2-.82 2.2-.82.44 1.1.16 1.92.08 2.12.51.56.82 1.27.82 2.15 0 3.07-1.87 3.75-3.65 3.95.29.25.54.73.54 1.48 0 1.07-.01 1.93-.01 2.2 0 .21.15.46.55.38A8.013 8.013 0 0016 8c0-4.42-3.58-8-8-8z"/>
           </svg>
-          <span>Source on GitHub</span>
+          <span>View on GitHub</span>
         </a>
       </div>
       <div class="sys-reqs">
-        <span>macOS 14.0+ (Sonoma / Sequoia)</span>
+        <span>macOS 14 or later</span>
         <span>·</span>
         <span>Apple Silicon &amp; Intel</span>
         <span>·</span>
-        <span>MIT License</span>
+        <span>Free &amp; open source</span>
         <span>·</span>
-        <span>Zero network permissions</span>
+        <span>Works offline</span>
       </div>
     </section>
 
-    <!-- Interactive NSPanel Demo -->
-    <section id="preview" class="stage-wrapper" aria-label="Interactive Klipboard preview">
-      <div class="stage-caption">
-        <span>INTERACTIVE PREVIEW — CLICK ITEMS OR TYPE TO SEARCH</span>
-        <span>NSPanel · .nonactivatingPanel</span>
-      </div>
+    <figure class="shot">
+      <img src="screenshot-panel.png" width="1300" height="960" alt="Klipboard window showing recently copied text, a link, an image and a file" />
+      <figcaption>Everything you copied, one keystroke away.</figcaption>
+    </figure>
 
-      <div class="nspanel">
-        <div class="panel-search-bar">
-          <svg class="panel-search-icon" width="15" height="15" viewBox="0 0 16 16" fill="none">
-            <circle cx="7" cy="7" r="5.25" stroke="currentColor" stroke-width="1.5"/>
-            <path d="M11 11l3.2 3.2" stroke="currentColor" stroke-width="1.5" stroke-linecap="round"/>
-          </svg>
-          <input id="demo-search" type="text" class="panel-search-input" placeholder="Search clipboard history..." autocomplete="off" />
-          <span id="demo-count" class="panel-Count-badge">5 items</span>
-        </div>
-
-
-        <div class="panel-body">
-          <div class="clip-list" id="demo-list"></div>
-          <div class="clip-inspector">
-            <div class="inspector-content" id="inspector-body"></div>
-            <div class="inspector-meta" id="inspector-meta"></div>
-          </div>
-        </div>
-
-        <div class="panel-footer">
-          <div class="footer-hints">
-            <span>↵ Paste</span>
-            <span>⌘⌫ Delete</span>
-            <span>Esc Close</span>
-          </div>
-          <span>⌥V to dismiss</span>
-        </div>
-      </div>
-    </section>
-
-    <!-- Engineering Metrics -->
-    <section class="metrics-strip">
-      <div class="metric-cell">
-        <div class="metric-value">0.0%</div>
-        <div class="metric-label">Idle CPU usage via timer coalescing</div>
-      </div>
-      <div class="metric-cell">
-        <div class="metric-value">1.6 MB</div>
-        <div class="metric-label">Disk footprint — zero Electron or WebViews</div>
-      </div>
-      <div class="metric-cell">
-        <div class="metric-value">&lt; 12 ms</div>
-        <div class="metric-label">Panel activation via Carbon HotKey API</div>
-      </div>
-      <div class="metric-cell">
-        <div class="metric-value">100%</div>
-        <div class="metric-label">Offline local storage in Application Support</div>
-      </div>
-    </section>
-
-    <!-- Architecture & Design -->
-    <section id="architecture">
+    <section id="features">
       <div class="section-head">
-        <div class="section-kicker">Architecture</div>
-        <h2 class="section-title">Engineered for zero background overhead.</h2>
+        <div class="section-kicker">Features</div>
+        <h2 class="section-title">Simple, fast, and stays out of your way.</h2>
       </div>
 
       <div class="bento-grid">
         <div class="bento-item">
-          <span class="bento-tag">01 / NSPasteboard.changeCount</span>
-          <h3>Lightweight Change-Count Polling</h3>
-          <p>Polls the integer <code>NSPasteboard.general.changeCount</code> with timer tolerance so macOS coalesces wakeups—near-zero CPU until you actually copy something new.</p>
+          <h3>Remembers what you copy</h3>
+          <p>Your last 100 copies are saved automatically. Pin the ones you use often so they're always at the top.</p>
         </div>
         <div class="bento-item">
-          <span class="bento-tag">02 / Non-Activating HUD</span>
-          <h3>Never Steals Focus</h3>
-          <p>Runs inside a floating <code>NSPanel</code> with <code>.nonactivatingPanel</code> mask. Your active code editor, browser, or terminal stays focused so pasting via synthesized <code>⌘V</code> is immediate.</p>
+          <h3>Pastes where you were typing</h3>
+          <p>Pick an item and Klipboard pastes it straight into the app you were using — no switching windows.</p>
         </div>
         <div class="bento-item">
-          <span class="bento-tag">03 / Multi-Representation Capture</span>
-          <h3>Text, RTF, Links, Colors &amp; Files</h3>
-          <p>Automatically classifies plain text, RTF formatting, URLs, hex/RGB color codes (rendering inline color swatches), screenshots, and local Finder file references.</p>
+          <h3>Text, links, images &amp; files</h3>
+          <p>Works with anything you copy: notes, web links, screenshots, colors, and files from Finder.</p>
         </div>
         <div class="bento-item">
-          <span class="bento-tag">04 / ImageIO Subsampling</span>
-          <h3>Bounded Memory Footprint</h3>
-          <p>Images are capped at 1920px and stored as separate files on disk, not in memory. Thumbnails come from <code>CGImageSourceCreateThumbnailAtIndex</code>, so RAM stays around 27 MB over multi-week uptime.</p>
+          <h3>Light on your Mac</h3>
+          <p>Uses almost no battery or memory while it waits in the menu bar, even after weeks of use.</p>
         </div>
         <div class="bento-item">
-          <span class="bento-tag">05 / Privacy &amp; Concealed Types</span>
-          <h3>Password Manager Aware</h3>
-          <p>Respects the standard concealed, transient, and auto-generated pasteboard markers, so passwords copied from 1Password, Keychain, or Bitwarden are never recorded.</p>
+          <h3>Skips your passwords</h3>
+          <p>Passwords copied from 1Password, Bitwarden, or Keychain are never saved.</p>
         </div>
         <div class="bento-item">
-          <span class="bento-tag">06 / Login Item &amp; Persistence</span>
-          <h3>Always There After a Restart</h3>
-          <p>Starts at login via <code>SMAppService</code> and runs quietly in the menu bar until you quit. History is written atomically to <code>~/Library/Application Support/Klipboard</code> off the main thread, keeping the latest 100 items plus everything pinned.</p>
+          <h3>Ready after a restart</h3>
+          <p>Starts on its own when you log in, with your history right where you left it. Everything stays on your Mac.</p>
         </div>
       </div>
     </section>
 
-    <!-- Shortcuts & Installation -->
     <section class="split-section">
       <div id="shortcuts" class="box-panel">
-        <h3>Keyboard Navigation</h3>
-        <p class="sub">Every action is reachable without touching the mouse.</p>
+        <h3>Keyboard Shortcuts</h3>
+        <p class="sub">Do everything without touching the mouse.</p>
         <table class="shortcut-table">
           <tbody>
             <tr>
-              <td>Summon or dismiss Klipboard</td>
+              <td>Open or close Klipboard</td>
               <td><kbd>⌥ V</kbd> or <kbd>⌘ ⇧ V</kbd></td>
             </tr>
             <tr>
-              <td>Navigate clipboard history</td>
+              <td>Move through your history</td>
               <td><kbd>↑</kbd> <kbd>↓</kbd></td>
             </tr>
             <tr>
-              <td>Paste selected item into active app</td>
+              <td>Paste the selected item</td>
               <td><kbd>↵ Return</kbd> or click</td>
             </tr>
             <tr>
-              <td>Delete selected item from history</td>
+              <td>Delete the selected item</td>
               <td><kbd>⌘ ⌫</kbd></td>
             </tr>
             <tr>
-              <td>Close the panel</td>
+              <td>Close without pasting</td>
               <td><kbd>Esc</kbd></td>
             </tr>
             <tr>
-              <td>Pin, favorite, or reveal in Finder</td>
+              <td>Pin, favorite, or show in Finder</td>
               <td>Right-click</td>
             </tr>
           </tbody>
@@ -970,180 +627,46 @@
 
       <div id="install" class="box-panel">
         <h3>Installation</h3>
-        <p class="sub">Install in one command (skips Gatekeeper popup) or via the drag-and-drop DMG.</p>
-        <div style="font-size: 12px; font-weight: 600; color: var(--text); margin-bottom: 6px;">Option A — 1-Line Terminal Install (Recommended, No Gatekeeper Warning)</div>
+        <p class="sub">Two ways to install — pick whichever you like.</p>
+        <div style="font-size: 12px; font-weight: 600; color: var(--text); margin-bottom: 6px;">Option A — Paste this into Terminal (easiest)</div>
         <div class="terminal-box" style="margin-top: 0; margin-bottom: 18px;">
-          <span id="curl-cmd" style="overflow-x: auto; white-space: nowrap;">curl -fsSL https://klipboard-beryl.vercel.app/install.sh | bash</span>
-          <button class="copy-btn" id="copy-curl" type="button">Copy</button>
+          <span style="overflow-x: auto; white-space: nowrap;">curl -fsSL https://klipboard-beryl.vercel.app/install.sh | bash</span>
+          <button class="copy-btn" data-copy="curl -fsSL https://klipboard-beryl.vercel.app/install.sh | bash" type="button">Copy</button>
         </div>
-        <div style="font-size: 12px; font-weight: 600; color: var(--text); margin-bottom: 10px;">Option B — Drag-and-Drop DMG Installer</div>
+        <div style="font-size: 12px; font-weight: 600; color: var(--text); margin-bottom: 10px;">Option B — Download</div>
         <ol class="install-steps">
-          <li>Download <a href="Klipboard-0.1.0.dmg" style="color: var(--text); text-decoration: underline;" download>Klipboard-0.1.0.dmg</a> (1.6 MB) and open the disk image.</li>
-          <li>Drag <strong>Klipboard.app</strong> into the <strong>Applications</strong> folder shortcut.</li>
-          <li>If macOS shows <strong>“Klipboard” Not Opened</strong>, either click <strong>Done</strong> → <strong>System Settings → Privacy &amp; Security → Open Anyway</strong>, or run once in Terminal:</li>
+          <li><span>Click <a href="#download" style="color: var(--text); text-decoration: underline;">Download Klipboard</a> at the top of this page and open the downloaded file.</span></li>
+          <li><span>Drag <strong>Klipboard</strong> into your <strong>Applications</strong> folder.</span></li>
+          <li><span>If macOS says <strong>“Klipboard” Not Opened</strong>, click <strong>Done</strong>, then go to <strong>System Settings → Privacy &amp; Security</strong> and click <strong>Open Anyway</strong>. Or paste this into Terminal:</span></li>
         </ol>
         <div class="terminal-box">
-          <span id="xattr-cmd" style="overflow-x: auto; white-space: nowrap;">xattr -cr /Applications/Klipboard.app &amp;&amp; open /Applications/Klipboard.app</span>
-          <button class="copy-btn" id="copy-xattr" type="button">Copy</button>
+          <span style="overflow-x: auto; white-space: nowrap;">xattr -cr /Applications/Klipboard.app &amp;&amp; open /Applications/Klipboard.app</span>
+          <button class="copy-btn" data-copy="xattr -cr /Applications/Klipboard.app && open /Applications/Klipboard.app" type="button">Copy</button>
         </div>
         <div style="font-size: 12px; font-weight: 600; color: var(--text); margin: 18px 0 10px;">After installing</div>
         <ol class="install-steps">
-          <li>On your first paste, click <strong>Open System Settings</strong> and turn on <strong>Klipboard</strong> under <strong>Privacy &amp; Security → Accessibility</strong> (shown as <strong>Device Control and Data Access</strong> on newer macOS). Then quit and reopen Klipboard.</li>
-          <li>That's it — Klipboard starts automatically at login and keeps your history across restarts. Turn this off anytime via <strong>Launch at Login</strong> in the menu-bar menu.</li>
+          <li><span>The first time you paste, click <strong>Open System Settings</strong> and turn on <strong>Klipboard</strong> under <strong>Privacy &amp; Security → Accessibility</strong>. Then quit and reopen Klipboard.</span></li>
+          <li><span>That's it. Klipboard starts by itself when you log in. You can turn this off with <strong>Launch at Login</strong> in its menu-bar menu.</span></li>
         </ol>
+      </div>
     </section>
   </main>
 
   <footer>
     <div class="footer-inner">
-      <span>Klipboard v0.1.0 · Built with Swift &amp; AppKit</span>
-      <div>
-        <a href="Klipboard-0.1.0.dmg" download>Download DMG</a>
-        <span style="margin: 0 10px;">·</span>
-        <a id="footer-repo" href="https://github.com/akai-49/Klipboard">GitHub Repository</a>
-      </div>
+      <span>Klipboard · Free &amp; open source</span>
+      <a href="https://github.com/akai-49/Klipboard">GitHub</a>
     </div>
   </footer>
 
   <script>
-    (function () {
-      const clips = [
-        {
-          id: 1,
-          type: 'text',
-          badge: 'TXT',
-          title: 'let panel = NSPanel(contentRect: rect, styleMask: [.nonactivatingPanel])',
-          sub: 'Xcode · 14s ago · Pinned',
-          sourceApp: 'Xcode',
-          chars: '142 chars',
-          captured: 'Just now',
-          content: 'let panel = NSPanel(\n  contentRect: NSRect(x: 0, y: 0, width: 680, height: 420),\n  styleMask: [.titled, .fullSizeContentView, .nonactivatingPanel],\n  backing: .buffered,\n  defer: false\n)'
-        },
-        {
-          id: 2,
-          type: 'color',
-          badge: 'HEX',
-          color: '#0A84FF',
-          title: '#0A84FF',
-          sub: 'Figma · 2m ago · RGB(10, 132, 255)',
-          sourceApp: 'Figma',
-          chars: '7 chars',
-          captured: '2m ago',
-          content: 'HEX: #0A84FF\nRGB: rgb(10, 132, 255)\nHSL: hsl(210, 100%, 52%)\nNSColor(srgbRed: 0.039, green: 0.518, blue: 1.0, alpha: 1.0)'
-        },
-        {
-          id: 3,
-          type: 'link',
-          badge: 'URL',
-          title: 'https://github.com/akai-49/Klipboard/releases/tag/v0.1.0',
-          sub: 'Safari · 6m ago',
-          sourceApp: 'Safari',
-          chars: '56 chars',
-          captured: '6m ago',
-          content: 'https://github.com/akai-49/Klipboard/releases/tag/v0.1.0\n\nHost: github.com\nScheme: https'
-        },
-        {
-          id: 4,
-          type: 'file',
-          badge: 'FILE',
-          title: 'Klipboard-0.1.0.dmg',
-          sub: 'Finder · 12m ago · 1.3 MB',
-          sourceApp: 'Finder',
-          chars: '1.3 MB',
-          captured: '12m ago',
-          content: '/Users/abhishek/Clipboard/Klipboard/dist/Klipboard-0.1.0.dmg\n\nKind: Apple Disk Image (.dmg)\nSize: 1,342,177 bytes'
-        },
-        {
-          id: 5,
-          type: 'text',
-          badge: 'TXT',
-          title: 'curl -fsSL https://klipboard-beryl.vercel.app/install.sh | bash',
-          sub: 'Ghostty · 19m ago',
-          sourceApp: 'Ghostty',
-          chars: '63 chars',
-          captured: '19m ago',
-          content: 'curl -fsSL https://klipboard-beryl.vercel.app/install.sh | bash'
-        }
-      ];
-
-      let selectedId = 1;
-      const listEl = document.getElementById('demo-list');
-      const searchEl = document.getElementById('demo-search');
-      const countEl = document.getElementById('demo-count');
-      const inspectorBody = document.getElementById('inspector-body');
-      const inspectorMeta = document.getElementById('inspector-meta');
-
-      function render() {
-        const q = (searchEl.value || '').toLowerCase().trim();
-        const filtered = clips.filter(c =>
-          !q || c.title.toLowerCase().includes(q) || c.content.toLowerCase().includes(q)
-        );
-
-        countEl.textContent = filtered.length + (filtered.length === 1 ? ' item' : ' items');
-
-        if (!filtered.some(c => c.id === selectedId) && filtered.length > 0) {
-          selectedId = filtered[0].id;
-        }
-
-        listEl.innerHTML = '';
-        filtered.forEach(item => {
-          const row = document.createElement('div');
-          row.className = 'clip-row' + (item.id === selectedId ? ' selected' : '');
-          const iconHtml = item.color
-            ? `<span class="color-chip" style="background:${item.color}"></span>`
-            : item.badge;
-          row.innerHTML = `
-            <div class="clip-row-left">
-              <div class="clip-type-icon">${iconHtml}</div>
-              <div style="min-width:0">
-                <div class="clip-title">${item.title}</div>
-                <div class="clip-sub">${item.sub}</div>
-              </div>
-            </div>
-          `;
-          row.addEventListener('click', () => {
-            selectedId = item.id;
-            render();
-          });
-          listEl.appendChild(row);
-        });
-
-        const active = filtered.find(c => c.id === selectedId) || filtered[0];
-        if (active) {
-          inspectorBody.textContent = active.content;
-          inspectorMeta.innerHTML = `
-            <div class="meta-pair"><span class="meta-label">Source</span><span class="meta-val">${active.sourceApp}</span></div>
-            <div class="meta-pair"><span class="meta-label">Type</span><span class="meta-val">${active.badge}</span></div>
-            <div class="meta-pair"><span class="meta-label">Size</span><span class="meta-val">${active.chars}</span></div>
-            <div class="meta-pair"><span class="meta-label">Captured</span><span class="meta-val">${active.captured}</span></div>
-          `;
-        } else {
-          inspectorBody.textContent = 'No matching clipboard items.';
-          inspectorMeta.innerHTML = '';
-        }
-      }
-
-
-      searchEl.addEventListener('input', render);
-
-      const copyCurlBtn = document.getElementById('copy-curl');
-      if (copyCurlBtn) {
-        copyCurlBtn.addEventListener('click', () => {
-          navigator.clipboard.writeText('curl -fsSL https://klipboard-beryl.vercel.app/install.sh | bash');
-          copyCurlBtn.textContent = 'Copied';
-          setTimeout(() => { copyCurlBtn.textContent = 'Copy'; }, 1600);
-        });
-      }
-
-      const copyBtn = document.getElementById('copy-xattr');
-      copyBtn.addEventListener('click', () => {
-        navigator.clipboard.writeText('xattr -cr /Applications/Klipboard.app && open /Applications/Klipboard.app');
-        copyBtn.textContent = 'Copied';
-        setTimeout(() => { copyBtn.textContent = 'Copy'; }, 1600);
+    document.querySelectorAll('.copy-btn').forEach((btn) => {
+      btn.addEventListener('click', () => {
+        navigator.clipboard.writeText(btn.dataset.copy);
+        btn.textContent = 'Copied';
+        setTimeout(() => { btn.textContent = 'Copy'; }, 1600);
       });
-
-      render();
-    })();
+    });
   </script>
 </body>
 </html>
