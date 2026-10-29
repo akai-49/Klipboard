@@ -1,8 +1,13 @@
 import AppKit
 
 enum PasteboardWriter {
-    /// Writes the item back to the pasteboard, preserving its native type.
-    static func write(_ item: ClipItem, to pasteboard: NSPasteboard = .general) {
+    /// Writes the item back to the pasteboard, preserving its native type unless `plainText`
+    /// asks for text only (no fonts or colours). Images and files have no plain form.
+    static func write(_ item: ClipItem, plainText: Bool = false, to pasteboard: NSPasteboard = .general) {
+        if plainText, item.type.hasPlainText, let text = item.text {
+            writeString(text, to: pasteboard)
+            return
+        }
         pasteboard.clearContents()
         switch item.type {
         case .text, .url:
@@ -28,8 +33,9 @@ enum PasteboardWriter {
                 }
             }
         case .file:
-            if let url = item.fileURL {
-                pasteboard.writeObjects([url as NSURL])
+            let urls = item.pasteableFileURLs()
+            if !urls.isEmpty {
+                pasteboard.writeObjects(urls.map { $0 as NSURL })
             }
         case .color:
             if let data = item.payload {
@@ -39,6 +45,11 @@ enum PasteboardWriter {
                 pasteboard.setString(text, forType: .string)
             }
         }
+    }
+
+    static func writeString(_ string: String, to pasteboard: NSPasteboard = .general) {
+        pasteboard.clearContents()
+        pasteboard.setString(string, forType: .string)
     }
 
     /// Synthetic key events are silently dropped without Accessibility permission.

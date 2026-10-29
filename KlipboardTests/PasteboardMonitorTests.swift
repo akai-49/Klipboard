@@ -66,7 +66,7 @@ final class PasteboardMonitorTests: XCTestCase {
     @MainActor
     func testPinnedItemsSortFirstAndFileDeduplicationUsesFullURL() {
         let store = ClipboardStore(inMemory: true)
-        let vm = ClipboardViewModel(store: store)
+        let vm = ClipboardViewModel(store: store, snippets: SnippetStore(fileURL: nil))
 
         let fileA = ClipItem(type: .file, text: "README.md", fileURLString: "file:///folderA/README.md")
         let fileB = ClipItem(type: .file, text: "README.md", fileURLString: "file:///folderB/README.md")

@@ -18,6 +18,7 @@ struct ClipboardRowView: View {
 
     let item: ClipItem
     let isSelected: Bool
+    var shortcutLabel: String? = nil
 
     var body: some View {
         HStack(spacing: 10) {
@@ -42,6 +43,7 @@ struct ClipboardRowView: View {
             if item.isFavorite {
                 Image(systemName: "star.fill").foregroundStyle(.yellow)
             }
+            ShortcutBadge(label: shortcutLabel)
         }
         .padding(.horizontal, 10)
         .padding(.vertical, 6)
@@ -71,7 +73,7 @@ struct ClipboardRowView: View {
                 icon
             }
         case .file:
-            if let url = item.fileURL {
+            if let url = item.pasteableFileURLs().first ?? item.fileURL {
                 Image(nsImage: NSWorkspace.shared.icon(forFile: url.path))
                     .resizable()
                     .frame(width: 24, height: 24)
@@ -116,7 +118,7 @@ struct ClipboardRowView: View {
     }
 }
 
-private extension Color {
+extension Color {
     init?(hex: String) {
         var s = hex.trimmingCharacters(in: .whitespacesAndNewlines)
         s.removeAll { $0 == "#" }

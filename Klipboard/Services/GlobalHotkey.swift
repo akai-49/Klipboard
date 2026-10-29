@@ -2,28 +2,8 @@ import AppKit
 import ApplicationServices
 import Carbon.HIToolbox
 
-enum HotkeyShortcut: String, CaseIterable {
-    case optionV = "option_v"
-    case cmdShiftV = "cmd_shift_v"
-
-    var label: String {
-        switch self {
-        case .optionV: return "⌥V (Option + V)"
-        case .cmdShiftV: return "⌘⇧V (Command + Shift + V)"
-        }
-    }
-
-    var carbonModifiers: UInt32 {
-        switch self {
-        case .optionV: return UInt32(optionKey)
-        case .cmdShiftV: return UInt32(cmdKey | shiftKey)
-        }
-    }
-}
-
-/// Listens system-wide for ⌥V (Option + V) and ⌘⇧V (Command + Shift + V)
-/// using Carbon RegisterEventHotKey on GetApplicationEventTarget() plus
-/// NSEvent/CGEventTap fallback so shortcuts toggle the panel open and closed.
+/// Listens system-wide for the user's recorded shortcuts using Carbon
+/// RegisterEventHotKey plus NSEvent/CGEventTap fallbacks, and reports which action fired.
 final class GlobalHotkey {
     private var hotKeyRefs: [EventHotKeyRef] = []
     private var eventHandlerRef: EventHandlerRef?
@@ -31,41 +11,36 @@ final class GlobalHotkey {
     private var runLoopSource: CFRunLoopSource?
     private var globalMonitor: Any?
     private var localMonitor: Any?
-    private var lastTriggerTime: TimeInterval = 0
+    private var lastTriggerTime: [HotkeyAction: TimeInterval] = [:]
+    private var combos: [(action: HotkeyAction, combo: KeyCombo)] = []
 
-    var onTrigger: (() -> Void)?
-
-    var activeShortcut: HotkeyShortcut {
-        get {
-            if let raw = UserDefaults.standard.string(forKey: "KlipboardShortcut"),
-               let shortcut = HotkeyShortcut(rawValue: raw) {
-                return shortcut
-            }
-            UserDefaults.standard.set(HotkeyShortcut.optionV.rawValue, forKey: "KlipboardShortcut")
-            return .optionV
-        }
-        set {
-            UserDefaults.standard.set(newValue.rawValue, forKey: "KlipboardShortcut")
-            start()
-        }
-    }
+    var onTrigger: ((HotkeyAction) -> Void)?
 
     func start() {
         stop()
-
-        // Ensure any removed legacy preference (like cmd_v) is migrated to option_v
-        _ = activeShortcut
-
-        let carbonOptionVWorked = setupCarbonHotkeys()
+        combos = HotkeyAction.allCases.compactMap { action in
+            Prefs.shortcut(for: action).map { (action, $0) }
+        }
+        guard !combos.isEmpty else { return }
+        let allRegistered = setupCarbonHotkeys()
         setupNSEventMonitors()
-        setupEventTap(promptIfNeeded: !carbonOptionVWorked)
+        setupEventTap(promptIfNeeded: !allRegistered)
     }
 
-    private func fireTrigger() {
+    /// Carbon, the NSEvent monitor and the event tap can all see one keypress; fire once.
+    private func fireTrigger(_ action: HotkeyAction) {
         let now = ProcessInfo.processInfo.systemUptime
-        guard now - lastTriggerTime > 0.15 else { return }
-        lastTriggerTime = now
-        onTrigger?()
+        guard now - (lastTriggerTime[action] ?? 0) > 0.15 else { return }
+        lastTriggerTime[action] = now
+        onTrigger?(action)
+    }
+
+    private func action(keyCode: UInt16, flags: NSEvent.ModifierFlags) -> HotkeyAction? {
+        combos.first { $0.combo.matches(keyCode: keyCode, flags: flags) }?.action
+    }
+
+    private func action(keyCode: UInt16, cgFlags: CGEventFlags) -> HotkeyAction? {
+        combos.first { $0.combo.matches(keyCode: keyCode, cgFlags: cgFlags) }?.action
     }
 
     @discardableResult
@@ -79,11 +54,24 @@ final class GlobalHotkey {
         let selfPtr = Unmanaged.passUnretained(self).toOpaque()
         InstallEventHandler(
             target,
-            { _, _, userData -> OSStatus in
-                guard let userData else { return OSStatus(eventNotHandledErr) }
+            { _, event, userData -> OSStatus in
+                guard let userData, let event else { return OSStatus(eventNotHandledErr) }
+                var hotKeyID = EventHotKeyID()
+                let status = GetEventParameter(
+                    event,
+                    EventParamName(kEventParamDirectObject),
+                    EventParamType(typeEventHotKeyID),
+                    nil,
+                    MemoryLayout<EventHotKeyID>.size,
+                    nil,
+                    &hotKeyID
+                )
+                guard status == noErr else { return status }
                 let hotkey = Unmanaged<GlobalHotkey>.fromOpaque(userData).takeUnretainedValue()
+                let index = Int(hotKeyID.id) - 1
                 DispatchQueue.main.async {
-                    hotkey.fireTrigger()
+                    guard hotkey.combos.indices.contains(index) else { return }
+                    hotkey.fireTrigger(hotkey.combos[index].action)
                 }
                 return noErr
             },
@@ -93,14 +81,13 @@ final class GlobalHotkey {
             &eventHandlerRef
         )
 
-        var optionVRegistered = false
-        let shortcutsToRegister: [HotkeyShortcut] = [.optionV, .cmdShiftV]
-        for (index, shortcut) in shortcutsToRegister.enumerated() {
+        var allRegistered = true
+        for (index, entry) in combos.enumerated() {
             var ref: EventHotKeyRef?
             let hotKeyID = EventHotKeyID(signature: OSType(0x4B4C4950), id: UInt32(index + 1))
             let status = RegisterEventHotKey(
-                UInt32(kVK_ANSI_V),
-                shortcut.carbonModifiers,
+                UInt32(entry.combo.keyCode),
+                entry.combo.carbonModifiers,
                 hotKeyID,
                 target,
                 0,
@@ -108,33 +95,27 @@ final class GlobalHotkey {
             )
             if status == noErr, let ref {
                 hotKeyRefs.append(ref)
-                if shortcut == .optionV {
-                    optionVRegistered = true
-                }
+            } else {
+                allRegistered = false
             }
         }
-        return optionVRegistered
+        return allRegistered
     }
 
     private func setupNSEventMonitors() {
         localMonitor = NSEvent.addLocalMonitorForEvents(matching: .keyDown) { [weak self] event in
-            guard let self else { return event }
-            if Self.matchesShortcut(keyCode: event.keyCode, flags: event.modifierFlags) {
-                DispatchQueue.main.async {
-                    self.fireTrigger()
-                }
-                return nil
+            guard let self, let action = self.action(keyCode: event.keyCode, flags: event.modifierFlags) else {
+                return event
             }
-            return event
+            DispatchQueue.main.async { self.fireTrigger(action) }
+            return nil
         }
 
         globalMonitor = NSEvent.addGlobalMonitorForEvents(matching: .keyDown) { [weak self] event in
-            guard let self else { return }
-            if Self.matchesShortcut(keyCode: event.keyCode, flags: event.modifierFlags) {
-                DispatchQueue.main.async {
-                    self.fireTrigger()
-                }
+            guard let self, let action = self.action(keyCode: event.keyCode, flags: event.modifierFlags) else {
+                return
             }
+            DispatchQueue.main.async { self.fireTrigger(action) }
         }
     }
 
@@ -170,11 +151,8 @@ final class GlobalHotkey {
                 }
 
                 let keyCode = UInt16(event.getIntegerValueField(.keyboardEventKeycode))
-                let cgFlags = event.flags
-                if GlobalHotkey.matchesCGShortcut(keyCode: keyCode, flags: cgFlags) {
-                    DispatchQueue.main.async {
-                        hotkey.fireTrigger()
-                    }
+                if let action = hotkey.action(keyCode: keyCode, cgFlags: event.flags) {
+                    DispatchQueue.main.async { hotkey.fireTrigger(action) }
                     return nil
                 }
 
@@ -190,19 +168,6 @@ final class GlobalHotkey {
         CGEvent.tapEnable(tap: tap, enable: true)
         self.eventTap = tap
         self.runLoopSource = source
-    }
-
-    private static func matchesShortcut(keyCode: UInt16, flags: NSEvent.ModifierFlags) -> Bool {
-        guard keyCode == UInt16(kVK_ANSI_V) else { return false }
-        let mods = flags.intersection([.command, .option, .control, .shift])
-        return mods == [.option] || mods == [.command, .shift]
-    }
-
-    private static func matchesCGShortcut(keyCode: UInt16, flags: CGEventFlags) -> Bool {
-        guard keyCode == UInt16(kVK_ANSI_V) else { return false }
-        let relevant: CGEventFlags = [.maskCommand, .maskAlternate, .maskControl, .maskShift]
-        let mods = flags.intersection(relevant)
-        return mods == .maskAlternate || mods == [.maskCommand, .maskShift]
     }
 
     func stop() {

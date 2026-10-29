@@ -8,7 +8,7 @@ final class FloatingPanel: NSPanel {
 
     init(content: some View) {
         super.init(
-            contentRect: NSRect(x: 0, y: 0, width: 560, height: 420),
+            contentRect: NSRect(x: 0, y: 0, width: PanelLayout.listWidth, height: PanelLayout.height),
             styleMask: [.nonactivatingPanel, .titled, .fullSizeContentView, .closable],
             backing: .buffered,
             defer: true
@@ -66,6 +66,17 @@ final class FloatingPanel: NSPanel {
         DispatchQueue.main.asyncAfter(deadline: .now() + 0.15) { [weak self] in
             self?.isShowing = false
         }
+    }
+
+    /// Grows or shrinks to the right, keeping the list under the mouse, and stays on screen.
+    func setContentWidth(_ width: CGFloat) {
+        var newFrame = frameRect(forContentRect: NSRect(origin: .zero, size: NSSize(width: width, height: contentLayoutRect.height)))
+        guard newFrame.width != frame.width else { return }
+        newFrame.origin = frame.origin
+        if let visible = screen?.visibleFrame, newFrame.maxX > visible.maxX {
+            newFrame.origin.x = max(visible.minX, visible.maxX - newFrame.width)
+        }
+        setFrame(newFrame, display: true)
     }
 
     func dismiss() {

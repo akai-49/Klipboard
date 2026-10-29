@@ -18,4 +18,12 @@ enum ClipboardType: String, Codable {
         case .color: return "paintpalette"
         }
     }
+
+    /// Whether the item can be pasted as bare text.
+    var hasPlainText: Bool {
+        switch self {
+        case .text, .rtf, .url, .color: return true
+        case .image, .file: return false
+        }
+    }
 }

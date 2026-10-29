@@ -5,6 +5,7 @@ import Darwin
 @main
 enum KlipboardApp {
     static func main() {
+        Prefs.registerDefaults()
         #if DEBUG
         ensureSingleInstanceAndCleanDerivedData()
         #else
