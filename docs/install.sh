@@ -2,14 +2,13 @@
 set -euo pipefail
 
 APP_NAME="Klipboard"
-VERSION="${KLIPBOARD_VERSION:-0.1.0}"
 INSTALL_DIR="/Applications"
 APP_DEST="${INSTALL_DIR}/${APP_NAME}.app"
 DMG_URL="${KLIPBOARD_DMG_URL:-https://klipboard-beryl.vercel.app/${APP_NAME}.dmg}"
-FALLBACK_URL="https://github.com/akai-49/Klipboard/releases/download/v${VERSION}/${APP_NAME}-${VERSION}.dmg"
+FALLBACK_URL="https://github.com/akai-49/Klipboard/releases/latest/download/${APP_NAME}.dmg"
 
 TMP_DIR="$(mktemp -d "/tmp/klipboard-install.XXXXXX")"
-DMG_FILE="${TMP_DIR}/${APP_NAME}-${VERSION}.dmg"
+DMG_FILE="${TMP_DIR}/${APP_NAME}.dmg"
 MOUNT_POINT="${TMP_DIR}/mount"
 
 cleanup() {
@@ -20,7 +19,7 @@ cleanup() {
 }
 trap cleanup EXIT
 
-echo "==> Downloading ${APP_NAME} v${VERSION}..."
+echo "==> Downloading the latest ${APP_NAME}..."
 if ! curl -fsSL "${DMG_URL}" -o "${DMG_FILE}" 2>/dev/null; then
   echo "==> Primary mirror unavailable, trying GitHub Releases..."
   curl -fsSL "${FALLBACK_URL}" -o "${DMG_FILE}"
@@ -43,6 +42,8 @@ xattr -cr "${APP_DEST}" 2>/dev/null || true
 echo "==> Launching ${APP_NAME}..."
 open "${APP_DEST}"
 
+VERSION="$(defaults read "${APP_DEST}/Contents/Info" CFBundleShortVersionString 2>/dev/null || echo "")"
 echo ""
-echo "✓ ${APP_NAME} v${VERSION} installed to ${APP_DEST} and launched!"
-echo "  Press Option+V (⌥V) or Command+Shift+V (⌘⇧V) anytime to open your clipboard history."
+echo "✓ ${APP_NAME} ${VERSION:+v${VERSION} }installed to ${APP_DEST} and launched!"
+echo "  Press Option+V (⌥V) anytime to open your clipboard history."
+echo "  Change shortcuts and everything else in the menu-bar icon → Settings…"

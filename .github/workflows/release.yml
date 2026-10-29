@@ -18,13 +18,23 @@ jobs:
       - name: Checkout repository
         uses: actions/checkout@v4
 
-      - name: Build Klipboard.app and drag-and-drop DMG
-        run: ./build-release.sh
+      - name: Read version from project.yml
+        id: version
+        run: echo "version=$(sed -n 's/.*MARKETING_VERSION: *"\{0,1\}\([0-9.]*\)"\{0,1\}.*/\1/p' project.yml | head -1)" >> "$GITHUB_OUTPUT"
 
-      - name: Publish DMG to GitHub Releases (v0.1.0)
+      - name: Build universal Klipboard.app and drag-and-drop DMG
+        run: |
+          ./build-release.sh
+          # Unversioned copy so releases/latest/download/Klipboard.dmg always works.
+          cp "dist/Klipboard-${{ steps.version.outputs.version }}.dmg" dist/Klipboard.dmg
+
+      - name: Publish DMG to GitHub Releases
         uses: softprops/action-gh-release@v2
         with:
-          tag_name: v0.1.0
-          name: Klipboard v0.1.0
-          files: dist/Klipboard-*.dmg
+          tag_name: v${{ steps.version.outputs.version }}
+          name: Klipboard v${{ steps.version.outputs.version }}
+          files: |
+            dist/Klipboard-${{ steps.version.outputs.version }}.dmg
+            dist/Klipboard.dmg
           generate_release_notes: true
+          make_latest: true

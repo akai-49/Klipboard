@@ -4,11 +4,13 @@ set -euo pipefail
 cd "$(dirname "$0")"
 
 APP_NAME="${APP_NAME:-Klipboard}"
-VERSION="${VERSION:-0.1.0}"
-BUILD_NUM="${BUILD_NUM:-1}"
+# project.yml's MARKETING_VERSION is the single source of the version.
+VERSION="${VERSION:-$(sed -n 's/.*MARKETING_VERSION: *"\{0,1\}\([0-9.]*\)"\{0,1\}.*/\1/p' project.yml | head -1)}"
+BUILD_NUM="${BUILD_NUM:-$(sed -n 's/.*CURRENT_PROJECT_VERSION: *"\{0,1\}\([0-9]*\)"\{0,1\}.*/\1/p' project.yml | head -1)}"
 BUNDLE_ID="${BUNDLE_ID:-com.abhishek.Klipboard}"
 MIN_MACOS="${MIN_MACOS:-14.0}"
-ARCH="${ARCH:-$(uname -m)}"
+# Universal (Apple Silicon + Intel) by default; e.g. ARCHS=arm64 for a faster local build.
+ARCHS="${ARCHS:-arm64 x86_64}"
 SIGN_IDENTITY="${SIGN_IDENTITY:--}"
 
 ROOT_DIR="$(cd .. && pwd)"
@@ -31,13 +33,19 @@ echo "==> Preparing ${APP_BUNDLE}..."
 mkdir -p "${APP_BUNDLE}/Contents/MacOS"
 mkdir -p "${APP_BUNDLE}/Contents/Resources"
 
-echo "==> Compiling ${APP_NAME} (${ARCH}-apple-macosx${MIN_MACOS})..."
 TMP_BIN="${DIST_DIR}/.${APP_NAME}.tmp"
-swiftc -O -whole-module-optimization \
-  -sdk "${SDK_PATH}" \
-  -target "${ARCH}-apple-macosx${MIN_MACOS}" \
-  "${SOURCES[@]}" \
-  -o "${TMP_BIN}"
+SLICES=()
+for ARCH in ${ARCHS}; do
+  echo "==> Compiling ${APP_NAME} v${VERSION} (${ARCH}-apple-macosx${MIN_MACOS})..."
+  swiftc -O -whole-module-optimization \
+    -sdk "${SDK_PATH}" \
+    -target "${ARCH}-apple-macosx${MIN_MACOS}" \
+    "${SOURCES[@]}" \
+    -o "${TMP_BIN}.${ARCH}"
+  SLICES+=("${TMP_BIN}.${ARCH}")
+done
+lipo -create "${SLICES[@]}" -output "${TMP_BIN}"
+rm -f "${SLICES[@]}"
 
 chmod +x "${TMP_BIN}"
 mv -f "${TMP_BIN}" "${APP_BUNDLE}/Contents/MacOS/${APP_NAME}"
