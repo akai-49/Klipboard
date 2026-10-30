@@ -4,6 +4,8 @@
 
 <p align="center"><img src="docs/screenshot-panel.png" alt="Klipboard panel showing clipboard history" width="650"></p>
 
+<p align="center"><img src="docs/screenshot-menu.png" alt="Klipboard menu bar menu" width="320"></p>
+
 ## Features
 
 ### Find and paste

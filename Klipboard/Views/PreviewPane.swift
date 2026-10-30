@@ -104,7 +104,8 @@ struct PreviewPane: View {
             if let app = item.sourceApp { Text("From \(app)") }
             Text(Self.dateFormatter.string(from: item.createdAt))
             if item.type.hasPlainText, let text = item.text {
-                Text("\(text.count) characters · \(text.split(whereSeparator: \.isNewline).count) lines")
+                let lines = text.split(whereSeparator: \.isNewline).count
+                Text("\(text.count) characters · \(lines) line\(lines == 1 ? "" : "s")")
             }
         }
         .font(.caption)
