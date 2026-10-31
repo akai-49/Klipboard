@@ -57,7 +57,7 @@ Updates install automatically after this version via Sparkle.
 ### Option 1: Homebrew Cask
 
 ```bash
-brew install --cask akai-49/klipboard/klipboard
+brew trust akai-49/klipboard && brew install --cask akai-49/klipboard/klipboard
 ```
 
 ### Option 2: 1-Line Terminal Installer (No Gatekeeper Popup)
@@ -157,7 +157,7 @@ Global shortcuts can be changed in **Settings → Shortcuts**; the modifiers for
 
 - **GitHub Releases ([`.github/workflows/release.yml`](.github/workflows/release.yml))**: Every push to `main` builds the universal DMG on macOS and publishes it to the release for the version in `project.yml` (e.g. `v0.3.0`), as both `Klipboard-<version>.dmg` and `Klipboard.dmg`. To release a new version, bump `MARKETING_VERSION` and push.
 - **Website ([`docs/`](docs/))**: Served by Vercel at [klipboard-beryl.vercel.app](https://klipboard-beryl.vercel.app), with the DMG at `/Klipboard.dmg` and the installer at `/install.sh`.
-- **Homebrew Cask ([`Casks/klipboard.rb`](Casks/klipboard.rb))**: Install via `brew install --cask akai-49/klipboard/klipboard`. Always installs the latest release (`releases/latest/download/Klipboard.dmg`).
+- **Homebrew Cask ([`Casks/klipboard.rb`](Casks/klipboard.rb))**: The template for the [akai-49/homebrew-klipboard](https://github.com/akai-49/homebrew-klipboard) tap. CI fills in the version and checksum after each release. Newer Homebrew asks you to trust third-party taps first, hence `brew trust akai-49/klipboard`.
 
 ## License
 

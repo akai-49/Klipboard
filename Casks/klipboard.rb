@@ -8,7 +8,7 @@ cask "klipboard" do
   homepage "https://github.com/akai-49/Klipboard"
 
   auto_updates true
-  depends_on macos: ">= :sonoma"
+  depends_on macos: :sonoma
 
   app "Klipboard.app"
 
