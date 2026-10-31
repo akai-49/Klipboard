@@ -17,19 +17,148 @@ jobs:
     steps:
       - name: Checkout repository
         uses: actions/checkout@v4
+        with:
+          fetch-depth: 0
 
       - name: Read version from project.yml
         id: version
         run: |
-          echo "version=$(sed -n 's/.*MARKETING_VERSION: *"\{0,1\}\([0-9.]*\)"\{0,1\}.*/\1/p' project.yml | head -1)" >> "$GITHUB_OUTPUT"
+          MARKETING_VERSION="$(sed -n 's/.*MARKETING_VERSION: *"\{0,1\}\([0-9.]*\)"\{0,1\}.*/\1/p' project.yml | head -1)"
+          CURRENT_PROJECT_VERSION="$(sed -n 's/.*CURRENT_PROJECT_VERSION: *"\{0,1\}\([0-9]*\)"\{0,1\}.*/\1/p' project.yml | head -1)"
+          echo "version=${MARKETING_VERSION}" >> "$GITHUB_OUTPUT"
+          echo "build_num=${CURRENT_PROJECT_VERSION}" >> "$GITHUB_OUTPUT"
+
+      - name: Check if release tag exists
+        id: check_tag
+        env:
+          GH_TOKEN: ${{ secrets.GITHUB_TOKEN }}
+        run: |
+          TAG="v${{ steps.version.outputs.version }}"
+          if [ "${GITHUB_REF_TYPE:-}" = "tag" ]; then
+            if [ "${GITHUB_REF_NAME:-}" != "${TAG}" ]; then
+              echo "::warning::Tag '${GITHUB_REF_NAME}' does not match expected version tag '${TAG}'. Skipping publish."
+              echo "publish=false" >> "$GITHUB_OUTPUT"
+            elif gh release view "${TAG}" >/dev/null 2>&1; then
+              echo "Release ${TAG} already exists; skipping publish."
+              echo "publish=false" >> "$GITHUB_OUTPUT"
+            else
+              echo "Release ${TAG} does not exist; proceeding with publish."
+              echo "publish=true" >> "$GITHUB_OUTPUT"
+            fi
+          else
+            if git ls-remote --exit-code --tags origin "refs/tags/${TAG}" >/dev/null 2>&1 || gh release view "${TAG}" >/dev/null 2>&1; then
+              echo "Tag or release ${TAG} already exists; skipping publish."
+              echo "publish=false" >> "$GITHUB_OUTPUT"
+            else
+              echo "Tag ${TAG} does not exist; proceeding with publish."
+              echo "publish=true" >> "$GITHUB_OUTPUT"
+            fi
+          fi
+
+      - name: Set up code signing keychain
+        id: keychain
+        env:
+          RELEASE_CERT_P12: ${{ secrets.RELEASE_CERT_P12 }}
+          RELEASE_CERT_PASSWORD: ${{ secrets.RELEASE_CERT_PASSWORD }}
+          WILL_PUBLISH: ${{ steps.check_tag.outputs.publish }}
+        run: |
+          if [ -n "${RELEASE_CERT_P12:-}" ] && [ -n "${RELEASE_CERT_PASSWORD:-}" ]; then
+            KEYCHAIN_PATH="${RUNNER_TEMP}/build.keychain"
+            KEYCHAIN_PWD="$(uuidgen)"
+            echo "keychain_path=${KEYCHAIN_PATH}" >> "$GITHUB_OUTPUT"
+            echo "sign_identity=Klipboard Release" >> "$GITHUB_OUTPUT"
+
+            security create-keychain -p "${KEYCHAIN_PWD}" "${KEYCHAIN_PATH}"
+            security set-keychain-settings -lut 21600 "${KEYCHAIN_PATH}"
+            security unlock-keychain -p "${KEYCHAIN_PWD}" "${KEYCHAIN_PATH}"
+
+            CERT_P12="${RUNNER_TEMP}/release-cert.p12"
+            printf '%s' "${RELEASE_CERT_P12}" | base64 --decode > "${CERT_P12}"
+
+            security import "${CERT_P12}" \
+              -k "${KEYCHAIN_PATH}" \
+              -P "${RELEASE_CERT_PASSWORD}" \
+              -T /usr/bin/codesign
+
+            rm -f "${CERT_P12}"
+
+            security set-key-partition-list \
+              -S apple-tool:,apple: \
+              -s \
+              -k "${KEYCHAIN_PWD}" \
+              "${KEYCHAIN_PATH}"
+
+            EXISTING="$(security list-keychains -d user | tr -d '"' | sed 's/^[ \t]*//')"
+            security list-keychains -d user -s "${KEYCHAIN_PATH}" ${EXISTING}
+          else
+            if [ "${WILL_PUBLISH}" = "true" ]; then
+              echo "::error::Secrets RELEASE_CERT_P12 and RELEASE_CERT_PASSWORD are required to publish a release. Ad-hoc releases are not allowed."
+              exit 1
+            fi
+            echo "keychain_path=" >> "$GITHUB_OUTPUT"
+            echo "sign_identity=-" >> "$GITHUB_OUTPUT"
+          fi
 
       - name: Build universal Klipboard.app and drag-and-drop DMG
+        env:
+          SIGN_IDENTITY: ${{ steps.keychain.outputs.sign_identity }}
+          KEYCHAIN: ${{ steps.keychain.outputs.keychain_path }}
         run: |
           ./build-release.sh
           # Unversioned copy so releases/latest/download/Klipboard.dmg always works.
           cp "dist/Klipboard-${{ steps.version.outputs.version }}.dmg" dist/Klipboard.dmg
 
-      - name: Publish DMG to GitHub Releases
+      - name: Sign DMG and generate appcast.xml
+        if: steps.check_tag.outputs.publish == 'true'
+        env:
+          SPARKLE_PRIVATE_KEY: ${{ secrets.SPARKLE_PRIVATE_KEY }}
+          VERSION: ${{ steps.version.outputs.version }}
+          BUILD_NUM: ${{ steps.version.outputs.build_num }}
+        run: |
+          if [ -z "${SPARKLE_PRIVATE_KEY:-}" ]; then
+            echo "::error::Secret SPARKLE_PRIVATE_KEY is missing but required to publish a release."
+            exit 1
+          fi
+
+          SPARKLE_VERSION="$(sed -n 's/^SPARKLE_VERSION="\{0,1\}\([^"]*\)"\{0,1\}/\1/p' build-release.sh | head -1)"
+          if [ -z "${SPARKLE_VERSION}" ]; then
+            echo "::error::SPARKLE_VERSION not found in build-release.sh."
+            exit 1
+          fi
+
+          SIGN_UPDATE_BIN=".build/sparkle-${SPARKLE_VERSION}/bin/sign_update"
+          if [ ! -x "${SIGN_UPDATE_BIN}" ]; then
+            echo "::error::Sparkle sign_update binary not found at ${SIGN_UPDATE_BIN}."
+            exit 1
+          fi
+
+          DMG_FILE="dist/Klipboard-${VERSION}.dmg"
+          ED_SIGNATURE="$(printf '%s' "${SPARKLE_PRIVATE_KEY}" | "${SIGN_UPDATE_BIN}" -p --ed-key-file - "${DMG_FILE}")"
+          DMG_LENGTH="$(wc -c < "${DMG_FILE}" | tr -d '[:space:]')"
+          PUB_DATE="$(date -u +"%a, %d %b %Y %H:%M:%S +0000")"
+
+          cat <<EOF | sed 's/^          //' > dist/appcast.xml
+          <?xml version="1.0" encoding="utf-8"?>
+          <rss version="2.0" xmlns:sparkle="http://www.andymatuschak.org/xml-namespaces/sparkle" xmlns:dc="http://purl.org/dc/elements/1.1/">
+              <channel>
+                  <title>Klipboard</title>
+                  <description>Klipboard updates</description>
+                  <language>en</language>
+                  <item>
+                      <title>Klipboard ${VERSION}</title>
+                      <pubDate>${PUB_DATE}</pubDate>
+                      <sparkle:version>${BUILD_NUM}</sparkle:version>
+                      <sparkle:shortVersionString>${VERSION}</sparkle:shortVersionString>
+                      <sparkle:minimumSystemVersion>14.0</sparkle:minimumSystemVersion>
+                      <sparkle:releaseNotesLink>https://github.com/akai-49/Klipboard/releases/tag/v${VERSION}</sparkle:releaseNotesLink>
+                      <enclosure url="https://github.com/akai-49/Klipboard/releases/download/v${VERSION}/Klipboard-${VERSION}.dmg" length="${DMG_LENGTH}" type="application/octet-stream" sparkle:edSignature="${ED_SIGNATURE}" />
+                  </item>
+              </channel>
+          </rss>
+          EOF
+
+      - name: Publish DMG and Appcast to GitHub Releases
+        if: steps.check_tag.outputs.publish == 'true'
         uses: softprops/action-gh-release@v2
         with:
           tag_name: v${{ steps.version.outputs.version }}
@@ -37,5 +166,48 @@ jobs:
           files: |
             dist/Klipboard-${{ steps.version.outputs.version }}.dmg
             dist/Klipboard.dmg
+            dist/appcast.xml
           generate_release_notes: true
           make_latest: true
+
+      - name: Update Homebrew Tap
+        if: steps.check_tag.outputs.publish == 'true'
+        env:
+          TAP_TOKEN: ${{ secrets.TAP_TOKEN }}
+          VERSION: ${{ steps.version.outputs.version }}
+        run: |
+          if [ -z "${TAP_TOKEN:-}" ]; then
+            echo "::notice::Secret TAP_TOKEN is not configured; skipping Homebrew tap update."
+            exit 0
+          fi
+
+          DMG_FILE="dist/Klipboard-${VERSION}.dmg"
+          DMG_SHA256="$(shasum -a 256 "${DMG_FILE}" | awk '{print $1}')"
+
+          TAP_DIR="${RUNNER_TEMP}/homebrew-klipboard"
+          git clone "https://x-access-token:${TAP_TOKEN}@github.com/akai-49/homebrew-klipboard.git" "${TAP_DIR}"
+
+          mkdir -p "${TAP_DIR}/Casks"
+          sed \
+            -e "s/version \".*\"/version \"${VERSION}\"/" \
+            -e "s/sha256 \".*\"/sha256 \"${DMG_SHA256}\"/" \
+            Casks/klipboard.rb > "${TAP_DIR}/Casks/klipboard.rb"
+
+          cd "${TAP_DIR}"
+          git config user.name "Kai"
+          git config user.email "abhishek.dev.4949@gmail.com"
+          git add Casks/klipboard.rb
+          if git diff --staged --quiet; then
+            echo "No changes in tap cask formula."
+          else
+            git commit --author="Kai <abhishek.dev.4949@gmail.com>" -m "Klipboard ${VERSION}"
+            git push origin HEAD
+          fi
+
+      - name: Clean up temporary keychain
+        if: always()
+        run: |
+          KEYCHAIN_PATH="${RUNNER_TEMP}/build.keychain"
+          if [ -n "${KEYCHAIN_PATH:-}" ] && { [ -f "${KEYCHAIN_PATH}" ] || [ -f "${KEYCHAIN_PATH}-db" ]; }; then
+            security delete-keychain "${KEYCHAIN_PATH}" || true
+          fi

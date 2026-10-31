@@ -33,6 +33,14 @@ final class SnippetStore: ObservableObject {
         snippets.removeAll { $0.id == id }
     }
 
+    /// Merges imported snippets without creating duplicates for already-existing IDs.
+    func importSnippets(_ newSnippets: [Snippet]) {
+        let existingIDs = Set(snippets.map(\.id))
+        let additions = newSnippets.filter { !existingIDs.contains($0.id) }
+        guard !additions.isEmpty else { return }
+        snippets.append(contentsOf: additions)
+    }
+
     private func save() {
         guard let fileURL, let data = try? JSONEncoder().encode(snippets) else { return }
         try? data.write(to: fileURL, options: .atomic)

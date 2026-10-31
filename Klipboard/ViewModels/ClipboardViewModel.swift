@@ -53,6 +53,8 @@ final class ClipboardViewModel: ObservableObject {
 
     /// Re-activates the app that was frontmost before the panel opened and returns it.
     var onRestoreFocus: (() -> NSRunningApplication?)?
+    /// Called when paste is attempted but Accessibility is not granted.
+    var onAccessibilityNeeded: (() -> Void)?
 
     let snippets: SnippetStore
     private let store: ClipboardStore
@@ -61,7 +63,17 @@ final class ClipboardViewModel: ObservableObject {
     private var cancellables = Set<AnyCancellable>()
     private var retentionTimer: Timer?
 
-    init(store: ClipboardStore, snippets: SnippetStore) {
+    private static var isRunningTests: Bool {
+        #if DEBUG
+        return ProcessInfo.processInfo.environment["XCTestBundlePath"] != nil ||
+               ProcessInfo.processInfo.environment["XCTestSessionIdentifier"] != nil ||
+               ProcessInfo.processInfo.environment["XCTestConfigurationFilePath"] != nil
+        #else
+        return false
+        #endif
+    }
+
+    init(store: ClipboardStore, snippets: SnippetStore, startMonitoring: Bool? = nil) {
         self.store = store
         self.snippets = snippets
         snippets.$snippets
@@ -69,17 +81,20 @@ final class ClipboardViewModel: ObservableObject {
             .store(in: &cancellables)
         applyRetention()
         items = store.fetchAll()
-        monitor.onNewItem = { [weak self] item in
-            self?.capture(item)
-        }
-        monitor.start()
-        screenshots.onScreenshot = { [weak self] url in
-            guard !Prefs.isPaused, let item = PasteboardMonitor.imageItem(fromFile: url) else { return }
-            self?.capture(item)
-        }
-        applyScreenshotSetting()
-        retentionTimer = Timer.scheduledTimer(withTimeInterval: 3600, repeats: true) { [weak self] _ in
-            MainActor.assumeIsolated { self?.applyRetention() }
+        let shouldMonitor = startMonitoring ?? !Self.isRunningTests
+        if shouldMonitor {
+            monitor.onNewItem = { [weak self] item in
+                self?.capture(item)
+            }
+            monitor.start()
+            screenshots.onScreenshot = { [weak self] url in
+                guard !Prefs.isPaused, let item = PasteboardMonitor.imageItem(fromFile: url) else { return }
+                self?.capture(item)
+            }
+            applyScreenshotSetting()
+            retentionTimer = Timer.scheduledTimer(withTimeInterval: 3600, repeats: true) { [weak self] _ in
+                MainActor.assumeIsolated { self?.applyRetention() }
+            }
         }
     }
 
@@ -92,6 +107,8 @@ final class ClipboardViewModel: ObservableObject {
         if !query.isEmpty {
             clips = clips.filter {
                 $0.previewText.lowercased().contains(query) ||
+                ($0.customName?.lowercased().contains(query) ?? false) ||
+                ($0.note?.lowercased().contains(query) ?? false) ||
                 ($0.sourceApp?.lowercased().contains(query) ?? false)
             }
         }
@@ -117,7 +134,7 @@ final class ClipboardViewModel: ObservableObject {
     }
 
     private func applyScreenshotSetting() {
-        if Prefs.saveScreenshots { screenshots.start() } else { screenshots.stop() }
+        if !Self.isRunningTests, Prefs.saveScreenshots { screenshots.start() } else { screenshots.stop() }
     }
 
     private func applyRetention() {
@@ -128,14 +145,10 @@ final class ClipboardViewModel: ObservableObject {
     }
 
     func capture(_ item: ClipItem) {
-        pasteStack.push(item)
-        if let last = store.mostRecent(),
-           last.type == item.type,
-           last.text == item.text,
-           last.fileURLs == item.fileURLs,
-           last.payload == item.payload {
+        if let top = store.fetchAll().first, top.hasSameContent(as: item) {
             return
         }
+        pasteStack.push(item)
         store.insert(item)
         items = store.fetchAll()
     }
@@ -167,6 +180,18 @@ final class ClipboardViewModel: ObservableObject {
         items = store.fetchAll()
     }
 
+    func setCustomName(_ name: String?, for item: ClipItem) {
+        item.customName = name
+        store.save()
+        items = store.fetchAll()
+    }
+
+    func setNote(_ note: String?, for item: ClipItem) {
+        item.note = note
+        store.save()
+        items = store.fetchAll()
+    }
+
     func saveAsSnippet(_ item: ClipItem) {
         guard let text = item.text, !text.isEmpty else { return }
         let firstLine = text.split(whereSeparator: \.isNewline).first.map(String.init) ?? text
@@ -183,9 +208,12 @@ final class ClipboardViewModel: ObservableObject {
             PasteboardWriter.writeString(snippet.text)
         }
         dismiss()
+        // Without permission the item stays on the pasteboard; show the permissions window instead of failing silently.
+        guard !WelcomeLogic.shouldPromptOnPaste(isAccessibilityTrusted: PasteboardWriter.isAccessibilityTrusted) else {
+            onAccessibilityNeeded?()
+            return
+        }
         let target = onRestoreFocus?()
-        // Without permission the item stays on the pasteboard; user can ⌘V manually.
-        guard PasteboardWriter.ensureAccessibility(prompt: true) else { return }
         PasteboardWriter.paste(into: target)
     }
 
@@ -197,13 +225,16 @@ final class ClipboardViewModel: ObservableObject {
 
     /// Pastes the oldest collected item into the frontmost app.
     func pasteNextFromStack() {
+        guard !WelcomeLogic.shouldPromptOnPaste(isAccessibilityTrusted: PasteboardWriter.isAccessibilityTrusted) else {
+            onAccessibilityNeeded?()
+            return
+        }
         guard let item = pasteStack.next() else {
             NSSound.beep()
             return
         }
         monitor.ignoreNextChange = true
         PasteboardWriter.write(item, plainText: Prefs.alwaysPlainText)
-        guard PasteboardWriter.ensureAccessibility(prompt: true) else { return }
         PasteboardWriter.paste(into: nil)
     }
 

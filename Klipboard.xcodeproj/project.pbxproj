@@ -8,10 +8,12 @@
 
 /* Begin PBXBuildFile section */
 		0309AC01E12DDAFE6CF0D9A9 /* ClipboardRowView.swift in Sources */ = {isa = PBXBuildFile; fileRef = D5CD51B2ECD88D9985FC5D49 /* ClipboardRowView.swift */; };
+		105ACA9AA21D43A94534E7F9 /* LaunchAtLogin.swift in Sources */ = {isa = PBXBuildFile; fileRef = A4983F1287FCFFF46A1C08B4 /* LaunchAtLogin.swift */; };
 		17C8BE024AE0E74E7E56517B /* GlobalHotkey.swift in Sources */ = {isa = PBXBuildFile; fileRef = 94D0793DC3A9B2B8FFA33DE8 /* GlobalHotkey.swift */; };
 		23EB2EC5C5CC90025682BF6C /* AppIcon.icns in Resources */ = {isa = PBXBuildFile; fileRef = 86C75DABB511B71359095778 /* AppIcon.icns */; };
 		30D2245A5EFC881E6EBB9AA4 /* AppCoordinator.swift in Sources */ = {isa = PBXBuildFile; fileRef = 2F9C25FFB3E8C97B6258EF36 /* AppCoordinator.swift */; };
 		3D18FF9709E558C4C070B3C4 /* FeatureTests.swift in Sources */ = {isa = PBXBuildFile; fileRef = 820FFB3407DACD267E77CFEB /* FeatureTests.swift */; };
+		45BBD750D0A046357A55F32D /* HistoryArchiver.swift in Sources */ = {isa = PBXBuildFile; fileRef = 9CB46C3F3C22EA7E1A377C48 /* HistoryArchiver.swift */; };
 		49FD110AB9CCC42F44E2CC2C /* ClipboardPanelView.swift in Sources */ = {isa = PBXBuildFile; fileRef = 467681FF3C9B1AF63E121D3E /* ClipboardPanelView.swift */; };
 		5A353E609AF88648CA65AB19 /* ClipboardStore.swift in Sources */ = {isa = PBXBuildFile; fileRef = 67BAE466F8CAA36FEF454823 /* ClipboardStore.swift */; };
 		5DF27E6B8F08E57C4ED03C1C /* Snippet.swift in Sources */ = {isa = PBXBuildFile; fileRef = F21B05B228611EE69067607C /* Snippet.swift */; };
@@ -23,13 +25,17 @@
 		BAB3270C19441D2115DF1D74 /* Assets.xcassets in Resources */ = {isa = PBXBuildFile; fileRef = F03FD915FA091C2040C71ECA /* Assets.xcassets */; };
 		C24A2008F5CE97D674A3A52B /* SnippetStore.swift in Sources */ = {isa = PBXBuildFile; fileRef = 04087B27995608EB9910527C /* SnippetStore.swift */; };
 		C642541682098B210C89E22E /* PasteboardMonitor.swift in Sources */ = {isa = PBXBuildFile; fileRef = 017F3CE856EF5F95EEDE33DC /* PasteboardMonitor.swift */; };
+		CB58F9397A73C964E5967BD8 /* WelcomeView.swift in Sources */ = {isa = PBXBuildFile; fileRef = 1086613152AC4B2C867C140F /* WelcomeView.swift */; };
+		D29E1FBD0E0AE354D8ADE818 /* Sparkle in Frameworks */ = {isa = PBXBuildFile; productRef = EBE538067CF5C9BCD8A22606 /* Sparkle */; };
 		D5C7618F0D2E10B83D620BC3 /* PasteboardWriter.swift in Sources */ = {isa = PBXBuildFile; fileRef = BBFCF705D907CCB6FFE893F2 /* PasteboardWriter.swift */; };
 		D663BB7D0A340F77D3248BA4 /* ScreenshotWatcher.swift in Sources */ = {isa = PBXBuildFile; fileRef = EC8422421F8D5E673C0978F1 /* ScreenshotWatcher.swift */; };
 		D731CEF08101C52813D9958A /* SettingsView.swift in Sources */ = {isa = PBXBuildFile; fileRef = 51254CC4C1FA0F21C8DA1C3E /* SettingsView.swift */; };
 		DC50E903A1D20BE347DD1DE3 /* ClipboardType.swift in Sources */ = {isa = PBXBuildFile; fileRef = 56981E8F331F1EB5E5D542FF /* ClipboardType.swift */; };
 		DCA7D32EC032206CCBEAD5A7 /* KlipboardApp.swift in Sources */ = {isa = PBXBuildFile; fileRef = 857175BB7838AE0C89C9408F /* KlipboardApp.swift */; };
 		E46033A74FC7B6CD9F31CA15 /* ClipboardViewModel.swift in Sources */ = {isa = PBXBuildFile; fileRef = 7A7A5814D4D980E77BE09936 /* ClipboardViewModel.swift */; };
+		E8CCDF9D0398A1BA36AC47F5 /* WelcomeLogic.swift in Sources */ = {isa = PBXBuildFile; fileRef = 9A826C6E8C3464901D2C3BD4 /* WelcomeLogic.swift */; };
 		F4A571094978003B34D20D91 /* FloatingPanel.swift in Sources */ = {isa = PBXBuildFile; fileRef = C7E404364D15049A6455727A /* FloatingPanel.swift */; };
+		F924A1E91A76D0100A09FF07 /* Sparkle in Frameworks */ = {isa = PBXBuildFile; productRef = CF174CFDAE56355A0FEC0E88 /* Sparkle */; };
 		FA9D66C859E9BC82DD6DD2D3 /* PreviewPane.swift in Sources */ = {isa = PBXBuildFile; fileRef = 46C43DEB7416BB208723FE88 /* PreviewPane.swift */; };
 		FEFABED034B739BE0200CAEF /* PasteStack.swift in Sources */ = {isa = PBXBuildFile; fileRef = 14F221AE4051731655A1E927 /* PasteStack.swift */; };
 /* End PBXBuildFile section */
@@ -47,6 +53,7 @@
 /* Begin PBXFileReference section */
 		017F3CE856EF5F95EEDE33DC /* PasteboardMonitor.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = PasteboardMonitor.swift; sourceTree = "<group>"; };
 		04087B27995608EB9910527C /* SnippetStore.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = SnippetStore.swift; sourceTree = "<group>"; };
+		1086613152AC4B2C867C140F /* WelcomeView.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = WelcomeView.swift; sourceTree = "<group>"; };
 		14F221AE4051731655A1E927 /* PasteStack.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = PasteStack.swift; sourceTree = "<group>"; };
 		2F9C25FFB3E8C97B6258EF36 /* AppCoordinator.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = AppCoordinator.swift; sourceTree = "<group>"; };
 		35D6A1952E933BF1B614D65F /* Klipboard.app */ = {isa = PBXFileReference; explicitFileType = wrapper.application; includeInIndex = 0; path = Klipboard.app; sourceTree = BUILT_PRODUCTS_DIR; };
@@ -65,6 +72,9 @@
 		8A780D6ED725F6F8FC4D35F1 /* PasteboardMonitorTests.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = PasteboardMonitorTests.swift; sourceTree = "<group>"; };
 		909A007C88E2BE925E6E718B /* AppDelegate.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = AppDelegate.swift; sourceTree = "<group>"; };
 		94D0793DC3A9B2B8FFA33DE8 /* GlobalHotkey.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = GlobalHotkey.swift; sourceTree = "<group>"; };
+		9A826C6E8C3464901D2C3BD4 /* WelcomeLogic.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = WelcomeLogic.swift; sourceTree = "<group>"; };
+		9CB46C3F3C22EA7E1A377C48 /* HistoryArchiver.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = HistoryArchiver.swift; sourceTree = "<group>"; };
+		A4983F1287FCFFF46A1C08B4 /* LaunchAtLogin.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = LaunchAtLogin.swift; sourceTree = "<group>"; };
 		A65E79E324790E2E886E9398 /* Info.plist */ = {isa = PBXFileReference; lastKnownFileType = text.plist; path = Info.plist; sourceTree = "<group>"; };
 		BBFCF705D907CCB6FFE893F2 /* PasteboardWriter.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = PasteboardWriter.swift; sourceTree = "<group>"; };
 		BEC42BF3A5CCB8C8F61BF1C2 /* ShortcutRecorder.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = ShortcutRecorder.swift; sourceTree = "<group>"; };
@@ -75,6 +85,25 @@
 		F21B05B228611EE69067607C /* Snippet.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = Snippet.swift; sourceTree = "<group>"; };
 		FF1E8366919F9FCE76C8E7AE /* Prefs.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = Prefs.swift; sourceTree = "<group>"; };
 /* End PBXFileReference section */
+
+/* Begin PBXFrameworksBuildPhase section */
+		2ADB628522795D7AB31D89B9 /* Frameworks */ = {
+			isa = PBXFrameworksBuildPhase;
+			buildActionMask = 2147483647;
+			files = (
+				D29E1FBD0E0AE354D8ADE818 /* Sparkle in Frameworks */,
+			);
+			runOnlyForDeploymentPostprocessing = 0;
+		};
+		3A03256BF078D34ADA00EEA9 /* Frameworks */ = {
+			isa = PBXFrameworksBuildPhase;
+			buildActionMask = 2147483647;
+			files = (
+				F924A1E91A76D0100A09FF07 /* Sparkle in Frameworks */,
+			);
+			runOnlyForDeploymentPostprocessing = 0;
+		};
+/* End PBXFrameworksBuildPhase section */
 
 /* Begin PBXGroup section */
 		1363C5669A7B97663255FD32 /* Settings */ = {
@@ -99,6 +128,7 @@
 			isa = PBXGroup;
 			children = (
 				67BAE466F8CAA36FEF454823 /* ClipboardStore.swift */,
+				9CB46C3F3C22EA7E1A377C48 /* HistoryArchiver.swift */,
 				04087B27995608EB9910527C /* SnippetStore.swift */,
 			);
 			path = Storage;
@@ -121,6 +151,7 @@
 				D5CD51B2ECD88D9985FC5D49 /* ClipboardRowView.swift */,
 				C7E404364D15049A6455727A /* FloatingPanel.swift */,
 				46C43DEB7416BB208723FE88 /* PreviewPane.swift */,
+				1086613152AC4B2C867C140F /* WelcomeView.swift */,
 			);
 			path = Views;
 			sourceTree = "<group>";
@@ -139,10 +170,12 @@
 			isa = PBXGroup;
 			children = (
 				94D0793DC3A9B2B8FFA33DE8 /* GlobalHotkey.swift */,
+				A4983F1287FCFFF46A1C08B4 /* LaunchAtLogin.swift */,
 				017F3CE856EF5F95EEDE33DC /* PasteboardMonitor.swift */,
 				BBFCF705D907CCB6FFE893F2 /* PasteboardWriter.swift */,
 				14F221AE4051731655A1E927 /* PasteStack.swift */,
 				EC8422421F8D5E673C0978F1 /* ScreenshotWatcher.swift */,
+				9A826C6E8C3464901D2C3BD4 /* WelcomeLogic.swift */,
 			);
 			path = Services;
 			sourceTree = "<group>";
@@ -209,6 +242,7 @@
 			buildPhases = (
 				707EE514D2C9F1EB7E13B064 /* Sources */,
 				A84DEDBAE365B23108C44C2B /* Resources */,
+				3A03256BF078D34ADA00EEA9 /* Frameworks */,
 			);
 			buildRules = (
 			);
@@ -216,6 +250,7 @@
 			);
 			name = Klipboard;
 			packageProductDependencies = (
+				CF174CFDAE56355A0FEC0E88 /* Sparkle */,
 			);
 			productName = Klipboard;
 			productReference = 35D6A1952E933BF1B614D65F /* Klipboard.app */;
@@ -226,6 +261,7 @@
 			buildConfigurationList = FE8B0B9E4040C20FF2BDE45F /* Build configuration list for PBXNativeTarget "KlipboardTests" */;
 			buildPhases = (
 				520B113E84A3685233FD8932 /* Sources */,
+				2ADB628522795D7AB31D89B9 /* Frameworks */,
 			);
 			buildRules = (
 			);
@@ -234,6 +270,7 @@
 			);
 			name = KlipboardTests;
 			packageProductDependencies = (
+				EBE538067CF5C9BCD8A22606 /* Sparkle */,
 			);
 			productName = KlipboardTests;
 			productReference = 4862DD82149B3C068E338EEA /* KlipboardTests.xctest */;
@@ -262,6 +299,9 @@
 			);
 			mainGroup = F246378AC1AB4DECE8ED0D21;
 			minimizedProjectReferenceProxies = 1;
+			packageReferences = (
+				631E2CEBEE4B2A80FDF65BF3 /* XCRemoteSwiftPackageReference "Sparkle" */,
+			);
 			preferredProjectObjectVersion = 77;
 			productRefGroup = D6A524BBA92D1E44A6BF0392 /* Products */;
 			projectDirPath = "";
@@ -309,7 +349,9 @@
 				E46033A74FC7B6CD9F31CA15 /* ClipboardViewModel.swift in Sources */,
 				F4A571094978003B34D20D91 /* FloatingPanel.swift in Sources */,
 				17C8BE024AE0E74E7E56517B /* GlobalHotkey.swift in Sources */,
+				45BBD750D0A046357A55F32D /* HistoryArchiver.swift in Sources */,
 				DCA7D32EC032206CCBEAD5A7 /* KlipboardApp.swift in Sources */,
+				105ACA9AA21D43A94534E7F9 /* LaunchAtLogin.swift in Sources */,
 				FEFABED034B739BE0200CAEF /* PasteStack.swift in Sources */,
 				C642541682098B210C89E22E /* PasteboardMonitor.swift in Sources */,
 				D5C7618F0D2E10B83D620BC3 /* PasteboardWriter.swift in Sources */,
@@ -320,6 +362,8 @@
 				7217D87591D18C9EF6CBACBF /* ShortcutRecorder.swift in Sources */,
 				5DF27E6B8F08E57C4ED03C1C /* Snippet.swift in Sources */,
 				C24A2008F5CE97D674A3A52B /* SnippetStore.swift in Sources */,
+				E8CCDF9D0398A1BA36AC47F5 /* WelcomeLogic.swift in Sources */,
+				CB58F9397A73C964E5967BD8 /* WelcomeView.swift in Sources */,
 			);
 			runOnlyForDeploymentPostprocessing = 0;
 		};
@@ -440,14 +484,14 @@
 				CODE_SIGN_ENTITLEMENTS = Klipboard/Resources/Klipboard.entitlements;
 				CODE_SIGN_STYLE = Automatic;
 				COMBINE_HIDPI_IMAGES = YES;
-				CURRENT_PROJECT_VERSION = 2;
+				CURRENT_PROJECT_VERSION = 3;
 				ENABLE_HARDENED_RUNTIME = YES;
 				INFOPLIST_FILE = Klipboard/Resources/Info.plist;
 				LD_RUNPATH_SEARCH_PATHS = (
 					"$(inherited)",
 					"@executable_path/../Frameworks",
 				);
-				MARKETING_VERSION = 0.2.0;
+				MARKETING_VERSION = 0.3.0;
 				PRODUCT_BUNDLE_IDENTIFIER = com.abhishek.Klipboard;
 				SDKROOT = macosx;
 				SWIFT_VERSION = 5.0;
@@ -517,14 +561,14 @@
 				CODE_SIGN_ENTITLEMENTS = Klipboard/Resources/Klipboard.entitlements;
 				CODE_SIGN_STYLE = Automatic;
 				COMBINE_HIDPI_IMAGES = YES;
-				CURRENT_PROJECT_VERSION = 2;
+				CURRENT_PROJECT_VERSION = 3;
 				ENABLE_HARDENED_RUNTIME = YES;
 				INFOPLIST_FILE = Klipboard/Resources/Info.plist;
 				LD_RUNPATH_SEARCH_PATHS = (
 					"$(inherited)",
 					"@executable_path/../Frameworks",
 				);
-				MARKETING_VERSION = 0.2.0;
+				MARKETING_VERSION = 0.3.0;
 				PRODUCT_BUNDLE_IDENTIFIER = com.abhishek.Klipboard;
 				SDKROOT = macosx;
 				SWIFT_VERSION = 5.0;
@@ -562,6 +606,30 @@
 			defaultConfigurationName = Debug;
 		};
 /* End XCConfigurationList section */
+
+/* Begin XCRemoteSwiftPackageReference section */
+		631E2CEBEE4B2A80FDF65BF3 /* XCRemoteSwiftPackageReference "Sparkle" */ = {
+			isa = XCRemoteSwiftPackageReference;
+			repositoryURL = "https://github.com/sparkle-project/Sparkle";
+			requirement = {
+				kind = exactVersion;
+				version = 2.10.1;
+			};
+		};
+/* End XCRemoteSwiftPackageReference section */
+
+/* Begin XCSwiftPackageProductDependency section */
+		CF174CFDAE56355A0FEC0E88 /* Sparkle */ = {
+			isa = XCSwiftPackageProductDependency;
+			package = 631E2CEBEE4B2A80FDF65BF3 /* XCRemoteSwiftPackageReference "Sparkle" */;
+			productName = Sparkle;
+		};
+		EBE538067CF5C9BCD8A22606 /* Sparkle */ = {
+			isa = XCSwiftPackageProductDependency;
+			package = 631E2CEBEE4B2A80FDF65BF3 /* XCRemoteSwiftPackageReference "Sparkle" */;
+			productName = Sparkle;
+		};
+/* End XCSwiftPackageProductDependency section */
 	};
 	rootObject = DE953BA9876C6815A32CE792 /* Project object */;
 }

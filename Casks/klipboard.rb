@@ -1,13 +1,13 @@
 cask "klipboard" do
-  version :latest
-  sha256 :no_check
+  version "0.3.0"
+  sha256 "SHA256_PLACEHOLDER"
 
-  repo = ENV.fetch("HOMEBREW_KLIPBOARD_REPO", "akai-49/Klipboard")
-  url "https://github.com/#{repo}/releases/latest/download/Klipboard.dmg"
+  url "https://github.com/akai-49/Klipboard/releases/download/v#{version}/Klipboard-#{version}.dmg"
   name "Klipboard"
   desc "Clipboard history, snippets and paste stack for the menu bar"
-  homepage "https://github.com/#{repo}"
+  homepage "https://github.com/akai-49/Klipboard"
 
+  auto_updates true
   depends_on macos: ">= :sonoma"
 
   app "Klipboard.app"

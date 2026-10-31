@@ -21,6 +21,7 @@ xcuserdata/
 *.dSYM
 
 # Build staging
+.build/
 dist/*.app/
 dist/dmg-staging/
 dist/.*.tmp

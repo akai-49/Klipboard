@@ -3,27 +3,52 @@
 <head>
   <meta charset="UTF-8" />
   <meta name="viewport" content="width=device-width, initial-scale=1.0" />
-  <title>Klipboard — Clipboard History for Mac</title>
-  <meta name="description" content="Klipboard remembers everything you copy on your Mac — text, links, images, screenshots and files. Press Option+V to find it again and paste it anywhere. Free, private and works offline." />
+  <title>Klipboard - Clipboard history for Mac</title>
+  <meta name="description" content="A lightweight clipboard manager for macOS. Remembers text, images, links and files, with quick search and a Spotlight-style panel. Free and private." />
   <link rel="icon" type="image/png" href="icon.png" />
+  <link rel="preconnect" href="https://fonts.googleapis.com" />
+  <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin />
+  <link href="https://fonts.googleapis.com/css2?family=Newsreader:ital,opsz,wght@0,6..72,400..600;1,6..72,400..600&display=swap" rel="stylesheet" />
   <style>
     :root {
-      --bg: #09090b;
-      --bg-elevated: #111114;
-      --bg-panel: rgba(22, 22, 26, 0.84);
-      --surface: #141418;
-      --surface-hover: #1c1c22;
-      --border: rgba(255, 255, 255, 0.08);
-      --border-strong: rgba(255, 255, 255, 0.15);
-      --text: #fafafa;
-      --text-secondary: #a1a1aa;
-      --text-muted: #71717a;
-      --accent: #0a84ff;
-      --selection: #0058d0;
-      --green: #30d158;
-      --amber: #ffd60a;
-      --sans: -apple-system, BlinkMacSystemFont, "SF Pro Text", "SF Pro Display", "Inter", system-ui, sans-serif;
-      --mono: "SF Mono", ui-monospace, Menlo, Monaco, Consolas, monospace;
+      --bg: #fbf9f5;
+      --surface: #ffffff;
+      --surface-subtle: #f4efe6;
+      --text: #1a1917;
+      --text-secondary: #57534a;
+      --text-muted: #878278;
+      --border: #e5ded3;
+      --border-strong: #cac1b3;
+      --accent: #1e5bb8;
+      --accent-hover: #14438b;
+      --code-bg: #f2ece2;
+      --code-border: #ded5c7;
+      --kbd-bg: #ffffff;
+      --kbd-border: #cfc6b8;
+      --kbd-text: #1a1917;
+      --font-serif: "Newsreader", Georgia, "Times New Roman", serif;
+      --font-sans: -apple-system, BlinkMacSystemFont, "SF Pro Text", "Helvetica Neue", sans-serif;
+      --font-mono: "SF Mono", ui-monospace, Menlo, Consolas, monospace;
+    }
+
+    @media (prefers-color-scheme: dark) {
+      :root {
+        --bg: #181716;
+        --surface: #201f1d;
+        --surface-subtle: #272522;
+        --text: #ece8df;
+        --text-secondary: #a39e94;
+        --text-muted: #747067;
+        --border: #32302b;
+        --border-strong: #45423b;
+        --accent: #6aa3f8;
+        --accent-hover: #8cbcfc;
+        --code-bg: #22201d;
+        --code-border: #36342e;
+        --kbd-bg: #262421;
+        --kbd-border: #423f38;
+        --kbd-text: #ece8df;
+      }
     }
 
     * {
@@ -33,52 +58,34 @@
     }
 
     html {
-      scroll-behavior: smooth;
       -webkit-font-smoothing: antialiased;
       -moz-osx-font-smoothing: grayscale;
+      text-rendering: optimizeLegibility;
     }
 
     body {
-      font-family: var(--sans);
       background-color: var(--bg);
       color: var(--text);
-      line-height: 1.5;
-      overflow-x: hidden;
-      selection-background-color: rgba(10, 132, 255, 0.3);
+      font-family: var(--font-sans);
+      font-size: 15.5px;
+      line-height: 1.6;
     }
 
-    /* Subtle top ambient light — understated, monochrome-warm */
-    .ambient {
-      position: fixed;
-      top: -280px;
-      left: 50%;
-      transform: translateX(-50%);
-      width: 960px;
-      height: 460px;
-      background: radial-gradient(50% 50% at 50% 50%, rgba(255, 255, 255, 0.055) 0%, rgba(255, 255, 255, 0) 100%);
-      pointer-events: none;
-      z-index: 0;
-    }
-
-    /* Top Navigation */
-    header {
-      position: sticky;
-      top: 0;
-      z-index: 50;
-      backdrop-filter: saturate(180%) blur(20px);
-      -webkit-backdrop-filter: saturate(180%) blur(20px);
-      background: rgba(9, 9, 11, 0.78);
-      border-bottom: 1px solid var(--border);
-    }
-
-    .nav-inner {
-      max-width: 1120px;
+    .container {
+      max-width: 660px;
       margin: 0 auto;
-      height: 60px;
-      padding: 0 24px;
+      padding: 44px 24px 88px;
+    }
+
+    /* Header */
+    .site-header {
       display: flex;
       align-items: center;
       justify-content: space-between;
+      gap: 16px;
+      padding-bottom: 28px;
+      margin-bottom: 20px;
+      border-bottom: 1px solid var(--border);
     }
 
     .brand {
@@ -87,384 +94,370 @@
       gap: 10px;
       text-decoration: none;
       color: var(--text);
-      font-weight: 600;
-      font-size: 15px;
-      letter-spacing: -0.01em;
     }
 
     .brand img {
-      width: 26px;
-      height: 26px;
+      width: 30px;
+      height: 30px;
       border-radius: 6px;
-      box-shadow: 0 2px 8px rgba(0, 0, 0, 0.5);
+      border: 1px solid var(--border);
+      display: block;
     }
 
+    .brand-title {
+      font-size: 16.5px;
+      font-weight: 600;
+      letter-spacing: -0.01em;
+    }
+
+    .brand-version {
+      font-size: 11.5px;
+      color: var(--text-muted);
+      font-family: var(--font-mono);
+    }
 
     .nav-links {
       display: flex;
       align-items: center;
-      gap: 28px;
+      gap: 16px;
+      font-size: 13.5px;
     }
 
     .nav-links a {
       color: var(--text-secondary);
       text-decoration: none;
-      font-size: 13.5px;
       transition: color 0.15s ease;
     }
 
     .nav-links a:hover {
-      color: var(--text);
+      color: var(--accent);
     }
 
-
-
-    /* Main Container */
-    main {
-      position: relative;
-      z-index: 1;
-      max-width: 1120px;
-      margin: 0 auto;
-      padding: 0 24px 120px;
+    .nav-download {
+      font-weight: 500;
+      color: var(--text) !important;
+      border: 1px solid var(--border-strong);
+      padding: 3px 9px;
+      border-radius: 5px;
+      background: var(--surface);
     }
 
-    /* Hero Section */
-    .hero {
-      padding: 76px 0 52px;
-      display: grid;
-      grid-template-columns: 1fr;
-      gap: 28px;
-      max-width: 760px;
+    .nav-download:hover {
+      border-color: var(--accent);
     }
 
-    .eyebrow {
-      display: inline-flex;
-      align-items: center;
-      gap: 8px;
-      font-family: var(--mono);
-      font-size: 12px;
-      color: var(--text-secondary);
-      letter-spacing: 0.02em;
-    }
-
-    .status-dot {
-      width: 7px;
-      height: 7px;
-      border-radius: 50%;
-      background: var(--green);
-      box-shadow: 0 0 8px rgba(48, 209, 88, 0.6);
-    }
-
+    /* Headings */
     h1 {
-      font-size: clamp(2.5rem, 5vw, 3.75rem);
-      font-weight: 650;
-      letter-spacing: -0.035em;
-      line-height: 1.08;
+      font-family: var(--font-serif);
+      font-size: clamp(2rem, 5vw, 2.6rem);
+      font-weight: 500;
+      line-height: 1.18;
+      letter-spacing: -0.015em;
       color: var(--text);
+      margin-bottom: 14px;
     }
 
-    .hero-lead {
-      font-size: 1.125rem;
-      line-height: 1.65;
+    h2 {
+      font-family: var(--font-serif);
+      font-size: 1.6rem;
+      font-weight: 500;
+      line-height: 1.25;
+      color: var(--text);
+      margin-top: 52px;
+      margin-bottom: 14px;
+      padding-top: 24px;
+      border-top: 1px solid var(--border);
+    }
+
+    h3 {
+      font-size: 15px;
+      font-weight: 600;
+      color: var(--text);
+      margin-top: 24px;
+      margin-bottom: 8px;
+    }
+
+    p {
       color: var(--text-secondary);
-      max-width: 620px;
-      font-weight: 400;
+      margin-bottom: 14px;
+    }
+
+    p.lead {
+      font-size: 16.5px;
+      line-height: 1.55;
+      color: var(--text);
+      margin-bottom: 20px;
+    }
+
+    a {
+      color: var(--accent);
+      text-decoration: underline;
+      text-underline-offset: 2.5px;
+    }
+
+    a:hover {
+      color: var(--accent-hover);
+    }
+
+    ul, ol {
+      color: var(--text-secondary);
+      margin: 10px 0 16px;
+      padding-left: 20px;
+    }
+
+    li {
+      margin-bottom: 8px;
+      line-height: 1.55;
+    }
+
+    li strong {
+      color: var(--text);
+      font-weight: 600;
     }
 
     kbd {
-      font-family: var(--mono);
-      font-size: 0.82em;
-      background: #18181c;
-      color: #e4e4e7;
-      border: 1px solid rgba(255, 255, 255, 0.14);
+      font-family: var(--font-mono);
+      font-size: 0.85em;
+      background: var(--kbd-bg);
+      color: var(--kbd-text);
+      border: 1px solid var(--kbd-border);
       border-bottom-width: 2px;
-      border-radius: 5px;
-      padding: 2px 6px;
+      border-radius: 4px;
+      padding: 1px 5px;
+      display: inline-block;
+      line-height: 1.35;
       vertical-align: baseline;
+      white-space: nowrap;
     }
 
+    /* Actions and terminal rows */
     .hero-actions {
       display: flex;
       align-items: center;
       gap: 12px;
       flex-wrap: wrap;
-      padding-top: 6px;
+      margin: 20px 0 12px;
     }
 
     .btn-download {
       display: inline-flex;
       align-items: center;
-      gap: 10px;
-      background: #ffffff;
-      color: #09090b;
-      font-size: 14.5px;
-      font-weight: 600;
-      padding: 12px 22px;
-      border-radius: 9px;
+      justify-content: center;
+      background: var(--text);
+      color: var(--bg);
       text-decoration: none;
-      transition: transform 0.12s ease, background 0.12s ease;
-      box-shadow: 0 1px 2px rgba(0, 0, 0, 0.2);
+      font-weight: 500;
+      font-size: 14px;
+      padding: 9px 16px;
+      border-radius: 6px;
+      border: 1px solid var(--text);
+      transition: opacity 0.15s ease;
     }
 
     .btn-download:hover {
-      background: #e4e4e7;
-      transform: translateY(-1px);
-    }
-
-
-    .btn-ghost {
-      display: inline-flex;
-      align-items: center;
-      gap: 8px;
-      background: var(--surface);
-      color: var(--text);
-      font-size: 14px;
-      font-weight: 500;
-      padding: 12px 18px;
-      border-radius: 9px;
-      border: 1px solid var(--border-strong);
+      opacity: 0.88;
+      color: var(--bg);
       text-decoration: none;
-      transition: background 0.15s ease, border-color 0.15s ease;
     }
 
-    .btn-ghost:hover {
-      background: var(--surface-hover);
-      border-color: rgba(255, 255, 255, 0.25);
-    }
-
-    .sys-reqs {
-      display: flex;
-      align-items: center;
-      gap: 18px;
-      flex-wrap: wrap;
-      font-size: 12.5px;
-      color: var(--text-muted);
-      font-family: var(--mono);
-    }
-
-    .sys-reqs span {
-      display: inline-flex;
-      align-items: center;
-      gap: 6px;
-    }
-
-
-    /* App screenshot */
-    .shot {
-      margin: 8px auto 0;
-      max-width: 860px;
-    }
-
-    .shot img {
-      display: block;
-      width: 100%;
-      height: auto;
-      border-radius: 16px;
-      border: 1px solid var(--border-strong);
-      box-shadow: 0 30px 90px rgba(0, 0, 0, 0.65);
-    }
-
-    .shot figcaption {
-      margin-top: 14px;
-      text-align: center;
-      font-size: 13px;
-      color: var(--text-muted);
-    }
-
-    #features {
-      margin-top: 96px;
-    }
-    /* Section Headers */
-    .section-head {
-      margin-bottom: 32px;
-    }
-
-    .section-kicker {
-      font-family: var(--mono);
-      font-size: 11.5px;
-      text-transform: uppercase;
-      letter-spacing: 0.08em;
-      color: var(--text-muted);
-      margin-bottom: 8px;
-    }
-
-    .section-title {
-      font-size: 1.75rem;
-      font-weight: 600;
-      letter-spacing: -0.025em;
-      color: var(--text);
-    }
-
-    /* Architectural Bento Grid */
-    .bento-grid {
-      display: grid;
-      grid-template-columns: repeat(3, 1fr);
-      border: 1px solid var(--border);
-      border-radius: 12px;
-      overflow: hidden;
-      background: var(--bg-elevated);
-      margin-bottom: 80px;
-    }
-
-    .bento-item {
-      padding: 28px;
-      border-right: 1px solid var(--border);
-      border-bottom: 1px solid var(--border);
-      display: flex;
-      flex-direction: column;
-      gap: 10px;
-    }
-
-    .bento-item:nth-child(3n) {
-      border-right: none;
-    }
-
-    .bento-item:nth-last-child(-n+3) {
-      border-bottom: none;
-    }
-
-
-    .bento-item h3 {
-      font-size: 15.5px;
-      font-weight: 600;
-      letter-spacing: -0.01em;
-      color: var(--text);
-    }
-
-    .bento-item p {
-      font-size: 13.5px;
-      color: var(--text-secondary);
-      line-height: 1.6;
-    }
-
-    /* Two-Column Shortcuts & Install */
-    .split-section {
-      display: grid;
-      grid-template-columns: 1fr 1fr;
-      gap: 32px;
-      align-items: start;
-    }
-
-    .box-panel {
-      min-width: 0;
-      background: var(--bg-elevated);
-      border: 1px solid var(--border);
-      border-radius: 12px;
-      padding: 28px;
-    }
-
-    .box-panel h3 {
-      font-size: 16px;
-      font-weight: 600;
-      margin-bottom: 6px;
-    }
-
-    .box-panel .sub {
-      font-size: 13px;
-      color: var(--text-secondary);
-      margin-bottom: 20px;
-    }
-
-    .shortcut-table {
-      width: 100%;
-      border-collapse: collapse;
-      font-size: 13.5px;
-    }
-
-    .shortcut-table tr {
-      border-top: 1px solid var(--border);
-    }
-
-    .shortcut-table td {
-      padding: 10px 0;
-      color: var(--text-secondary);
-    }
-
-    .shortcut-table td:last-child {
-      text-align: right;
-      white-space: nowrap;
-    }
-
-    .install-steps {
-      list-style: none;
-      counter-reset: step;
-      display: flex;
-      flex-direction: column;
-      gap: 16px;
-    }
-
-    .install-steps li {
-      counter-increment: step;
-      display: flex;
-      gap: 12px;
-      font-size: 13.5px;
-      color: var(--text-secondary);
-      line-height: 1.55;
-    }
-
-    .install-steps li::before {
-      content: counter(step);
-      font-family: var(--mono);
-      font-size: 11px;
-      width: 22px;
-      height: 22px;
-      border-radius: 50%;
-      background: rgba(255, 255, 255, 0.06);
-      border: 1px solid var(--border-strong);
-      color: var(--text);
-      display: inline-flex;
-      align-items: center;
-      justify-content: center;
-      flex-shrink: 0;
-      margin-top: 1px;
-    }
-
-    .terminal-box {
-      margin-top: 18px;
-      background: #09090b;
-      border: 1px solid var(--border-strong);
-      border-radius: 8px;
-      padding: 10px 12px;
+    .terminal-row {
       display: flex;
       align-items: center;
       justify-content: space-between;
       gap: 10px;
-      font-family: var(--mono);
-      font-size: 12px;
-      color: #d4d4d8;
+      background: var(--code-bg);
+      border: 1px solid var(--code-border);
+      border-radius: 6px;
+      padding: 8px 12px;
+      margin: 10px 0 16px;
+      max-width: 100%;
+      box-sizing: border-box;
     }
 
-    .terminal-box span {
+    .terminal-row code {
+      font-family: var(--font-mono);
+      font-size: 12.5px;
+      color: var(--text);
+      white-space: nowrap;
+      overflow-x: auto;
+      display: block;
       min-width: 0;
+      flex: 1 1 auto;
+      scrollbar-width: thin;
     }
 
     .copy-btn {
-      background: rgba(255, 255, 255, 0.07);
-      border: 1px solid var(--border);
+      font-family: var(--font-sans);
+      font-size: 11.5px;
+      font-weight: 500;
       color: var(--text-secondary);
-      font-family: var(--mono);
-      font-size: 11px;
-      padding: 4px 9px;
-      border-radius: 5px;
+      background: var(--surface);
+      border: 1px solid var(--border-strong);
+      border-radius: 4px;
+      padding: 3px 8px;
       cursor: pointer;
-      transition: all 0.12s ease;
+      flex-shrink: 0;
+      transition: color 0.15s, border-color 0.15s;
     }
 
     .copy-btn:hover {
       color: var(--text);
-      background: rgba(255, 255, 255, 0.12);
+      border-color: var(--accent);
     }
 
-    footer {
-      border-top: 1px solid var(--border);
-      padding: 32px 24px;
+    .meta-note {
       font-size: 13px;
       color: var(--text-muted);
+      margin-top: 6px;
+      margin-bottom: 24px;
     }
 
-    .footer-inner {
-      max-width: 1120px;
-      margin: 0 auto;
+    /* Screenshots */
+    figure.shot {
+      margin: 28px 0 34px;
+    }
+
+    figure.shot img {
+      display: block;
+      width: 100%;
+      height: auto;
+      border-radius: 8px;
+      border: 1px solid var(--border-strong);
+      box-shadow: 0 4px 18px rgba(0, 0, 0, 0.05);
+    }
+
+    figure.shot-small {
+      max-width: 420px;
+      margin: 22px 0 26px;
+    }
+
+    figcaption {
+      font-size: 13px;
+      color: var(--text-muted);
+      margin-top: 9px;
+      line-height: 1.45;
+    }
+
+    /* Shortcuts Table */
+    .table-wrap {
+      width: 100%;
+      overflow-x: auto;
+      margin: 16px 0 24px;
+      -webkit-overflow-scrolling: touch;
+    }
+
+    table.shortcut-table {
+      width: 100%;
+      border-collapse: collapse;
+      font-size: 14px;
+      line-height: 1.5;
+    }
+
+    table.shortcut-table th {
+      text-align: left;
+      padding: 8px 10px;
+      font-family: var(--font-mono);
+      font-size: 11px;
+      letter-spacing: 0.05em;
+      text-transform: uppercase;
+      color: var(--text-muted);
+      border-bottom: 1px solid var(--border-strong);
+      font-weight: 500;
+    }
+
+    table.shortcut-table td {
+      padding: 9px 10px;
+      border-bottom: 1px solid var(--border);
+      color: var(--text-secondary);
+      vertical-align: middle;
+    }
+
+    table.shortcut-table td.col-key {
+      color: var(--text);
+      white-space: nowrap;
+      width: 36%;
+    }
+
+    table.shortcut-table tr:last-child td {
+      border-bottom: 1px solid var(--border-strong);
+    }
+
+    /* Settings Table */
+    table.settings-table {
+      width: 100%;
+      border-collapse: collapse;
+      font-size: 13.5px;
+      line-height: 1.5;
+      margin: 14px 0 22px;
+    }
+
+    table.settings-table th {
+      text-align: left;
+      padding: 8px 10px;
+      font-family: var(--font-mono);
+      font-size: 11px;
+      letter-spacing: 0.05em;
+      text-transform: uppercase;
+      color: var(--text-muted);
+      border-bottom: 1px solid var(--border-strong);
+      font-weight: 500;
+    }
+
+    table.settings-table td {
+      padding: 9px 10px;
+      border-bottom: 1px solid var(--border);
+      color: var(--text-secondary);
+      vertical-align: top;
+    }
+
+    table.settings-table td.col-tab {
+      font-weight: 600;
+      color: var(--text);
+      white-space: nowrap;
+      width: 24%;
+    }
+
+    table.settings-table tr:last-child td {
+      border-bottom: 1px solid var(--border-strong);
+    }
+
+    /* Note box */
+    .note-box {
+      background: var(--surface-subtle);
+      border: 1px solid var(--border);
+      border-left: 3px solid var(--accent);
+      border-radius: 6px;
+      padding: 14px 16px;
+      margin: 16px 0 20px;
+      font-size: 14px;
+    }
+
+    .note-box p {
+      font-size: 14px;
+      margin-bottom: 8px;
+    }
+
+    .note-box p:last-child {
+      margin-bottom: 0;
+    }
+
+    .note-box ul {
+      margin: 6px 0 8px;
+      padding-left: 18px;
+      font-size: 13.5px;
+    }
+
+    .note-box li {
+      margin-bottom: 4px;
+    }
+
+    /* Footer */
+    footer {
+      margin-top: 56px;
+      padding-top: 24px;
+      border-top: 1px solid var(--border);
+      font-size: 13px;
+      color: var(--text-muted);
       display: flex;
       justify-content: space-between;
       align-items: center;
@@ -472,244 +465,334 @@
       gap: 12px;
     }
 
-    .footer-inner a {
+    footer a {
       color: var(--text-secondary);
-      text-decoration: none;
     }
 
-    .footer-inner a:hover {
+    footer a:hover {
       color: var(--text);
     }
 
-
-    @media (max-width: 820px) {
-      .bento-grid {
-        grid-template-columns: 1fr;
+    @media (max-width: 600px) {
+      .container {
+        padding: 24px 16px 64px;
       }
-      .bento-item {
-        border-right: none !important;
-        border-bottom: 1px solid var(--border) !important;
+      .site-header {
+        padding-bottom: 18px;
+        margin-bottom: 16px;
       }
-      .split-section {
-        grid-template-columns: 1fr;
+      .nav-links {
+        gap: 12px;
       }
-      .nav-links a:not(:last-child) {
+      .nav-links a:not(.nav-download):nth-child(1),
+      .nav-links a:not(.nav-download):nth-child(2) {
         display: none;
+      }
+      table.shortcut-table td.col-key {
+        width: auto;
+      }
+      .terminal-row {
+        padding: 8px 12px;
+        gap: 10px;
+      }
+      .terminal-row code {
+        white-space: pre-wrap;
+        word-break: normal;
+        overflow-wrap: anywhere;
+        line-height: 1.5;
+      }
+      .copy-btn {
+        flex-shrink: 0;
+      }
+    }
+
+    @media (max-width: 520px) {
+      .brand {
+        flex-shrink: 0;
+      }
+      .brand-version {
+        display: none;
+      }
+      .nav-links a:not(.nav-download) {
+        display: none;
+      }
+      .nav-download {
+        flex-shrink: 0;
+        white-space: nowrap;
       }
     }
   </style>
 </head>
 <body>
-  <div class="ambient"></div>
-
-  <header>
-    <div class="nav-inner">
+  <div class="container">
+    <header class="site-header">
       <a href="#" class="brand">
-        <img src="icon.png" alt="Klipboard icon" />
-        <span>Klipboard</span>
+        <img src="icon.png" width="30" height="30" alt="Klipboard icon" />
+        <span class="brand-title">Klipboard</span>
+        <span class="brand-version">v0.3.0</span>
       </a>
       <nav class="nav-links">
         <a href="#features">Features</a>
         <a href="#shortcuts">Shortcuts</a>
         <a href="#install">Install</a>
         <a href="https://github.com/akai-49/Klipboard">GitHub</a>
+        <a href="Klipboard.dmg" class="nav-download" download>Download</a>
       </nav>
-    </div>
-  </header>
+    </header>
 
-  <main>
-    <section class="hero">
-      <div class="eyebrow">
-        <span class="status-dot"></span>
-        <span>FREE FOR MAC · MACOS 14+</span>
-      </div>
-      <h1>Clipboard history that feels built into macOS.</h1>
-      <p class="hero-lead">
-        Klipboard remembers everything you copy — text, links, images, screenshots and files. Press <kbd>⌥V</kbd> anywhere, find what you need, and it's pasted right where you were typing.
-      </p>
-      <div class="hero-actions">
-        <a id="download" href="Klipboard.dmg" class="btn-download" download>
-          <svg width="16" height="16" viewBox="0 0 16 16" fill="none" aria-hidden="true">
-            <path d="M8 2v8.5M8 10.5L4.75 7.25M8 10.5l3.25-3.25M2.75 13.25h10.5" stroke="currentColor" stroke-width="1.6" stroke-linecap="round" stroke-linejoin="round"/>
-          </svg>
-          <span>Download Klipboard</span>
-        </a>
-        <a href="https://github.com/akai-49/Klipboard" class="btn-ghost">
-          <svg width="16" height="16" viewBox="0 0 16 16" fill="currentColor" aria-hidden="true">
-            <path d="M8 0C3.58 0 0 3.58 0 8c0 3.54 2.29 6.53 5.47 7.59.4.07.55-.17.55-.38 0-.19-.01-.82-.01-1.49-2.01.37-2.53-.49-2.69-.94-.09-.23-.48-.94-.82-1.13-.28-.15-.68-.52-.01-.53.63-.01 1.08.58 1.23.82.72 1.21 1.87.87 2.33.66.07-.52.28-.87.51-1.07-1.78-.2-3.64-.89-3.64-3.95 0-.87.31-1.59.82-2.15-.08-.2-.36-1.02.08-2.12 0 0 .67-.21 2.2.82.64-.18 1.32-.27 2-.27.68 0 1.36.09 2 .27 1.53-1.04 2.2-.82 2.2-.82.44 1.1.16 1.92.08 2.12.51.56.82 1.27.82 2.15 0 3.07-1.87 3.75-3.65 3.95.29.25.54.73.54 1.48 0 1.07-.01 1.93-.01 2.2 0 .21.15.46.55.38A8.013 8.013 0 0016 8c0-4.42-3.58-8-8-8z"/>
-          </svg>
-          <span>View on GitHub</span>
-        </a>
-      </div>
-      <div class="sys-reqs">
-        <span>macOS 14 or later</span>
-        <span>·</span>
-        <span>Apple Silicon &amp; Intel</span>
-        <span>·</span>
-        <span>Free &amp; open source</span>
-        <span>·</span>
-        <span>Works offline</span>
-      </div>
-    </section>
+    <main>
+      <section class="intro">
+        <h1>A clipboard history panel for Mac.</h1>
+        <p class="lead">
+          Klipboard lives in your menu bar and remembers what you copy, so you can search through your clips and paste them back anywhere with <kbd>⌥V</kbd>.
+        </p>
 
-    <figure class="shot">
-      <img src="screenshot-panel.png" width="1870" height="1014" alt="Klipboard window showing recently copied text, a link, an image and a file" />
-      <figcaption>Everything you copied, one keystroke away.</figcaption>
-    </figure>
+        <div class="hero-actions">
+          <a href="Klipboard.dmg" class="btn-download" download>Download Klipboard.dmg</a>
+          <span style="font-size: 13.5px; color: var(--text-muted);">or install via Homebrew</span>
+        </div>
 
-    <section id="features">
-      <div class="section-head">
-        <div class="section-kicker">Features</div>
-        <h2 class="section-title">Everything you copy, right where you need it.</h2>
-      </div>
+        <div class="terminal-row">
+          <code>brew install --cask akai-49/klipboard/klipboard</code>
+          <button type="button" class="copy-btn" data-copy="brew install --cask akai-49/klipboard/klipboard">Copy</button>
+        </div>
 
-      <div class="bento-grid">
-        <div class="bento-item">
-          <h3>Pastes where you were typing</h3>
-          <p>Press <kbd>⌥V</kbd>, pick an item and it's pasted straight into the app you were using. No switching windows.</p>
-        </div>
-        <div class="bento-item">
-          <h3>Find anything fast</h3>
-          <p>Search as you type, or tap a filter: Text, Links, Images, Files, Colors or Snippets.</p>
-        </div>
-        <div class="bento-item">
-          <h3>One keystroke to paste</h3>
-          <p>Press <kbd>⌘1</kbd> to <kbd>⌘9</kbd> to paste one of your nine latest items instantly.</p>
-        </div>
-        <div class="bento-item">
-          <h3>Plain text when you want it</h3>
-          <p>Hold <kbd>⇧</kbd> while pasting to drop fonts and colors — or make plain text the default.</p>
-        </div>
-        <div class="bento-item">
-          <h3>Look before you paste</h3>
-          <p>Press <kbd>Space</kbd> to see the whole item: long text, full-size images, documents and colors.</p>
-        </div>
-        <div class="bento-item">
-          <h3>Snippets</h3>
-          <p>Save things you type often, like your address or a reply, and paste them in a second.</p>
-        </div>
-        <div class="bento-item">
-          <h3>Paste stack</h3>
-          <p>Copy several things, then paste them one after another, in order, with <kbd>⌃⌥V</kbd>.</p>
-        </div>
-        <div class="bento-item">
-          <h3>Screenshots included</h3>
-          <p>Screenshots you take with <kbd>⌘⇧4</kbd> show up in Klipboard automatically, ready to paste.</p>
-        </div>
-        <div class="bento-item">
-          <h3>Files that keep working</h3>
-          <p>Copy one file or many. Klipboard keeps a copy, so they still paste after the original is moved or deleted.</p>
-        </div>
-        <div class="bento-item">
-          <h3>Private by design</h3>
-          <p>Skips passwords from password managers. Pause recording or ignore apps whenever you like. Works fully offline.</p>
-        </div>
-        <div class="bento-item">
-          <h3>Your history, your rules</h3>
-          <p>Keep 100 items or unlimited, auto-delete old ones, or clear it all — pinned and favorite items stay.</p>
-        </div>
-        <div class="bento-item">
-          <h3>Set it up your way</h3>
-          <p>Every shortcut and limit can be changed in Settings. Starts at login and uses almost no battery.</p>
-        </div>
-      </div>
-    </section>
+        <p class="meta-note">Free and open source. Requires macOS 14 Sonoma or later on Apple Silicon or Intel Macs.</p>
+      </section>
 
-    <section class="split-section">
-      <div id="shortcuts" class="box-panel">
-        <h3>Keyboard Shortcuts</h3>
-        <p class="sub">Do everything without touching the mouse. Change any of them in Settings.</p>
-        <table class="shortcut-table">
+      <figure class="shot">
+        <img src="screenshot-panel.png" width="1892" height="884" alt="Klipboard panel showing clipboard history" />
+        <figcaption>Press Option-V anywhere to open the panel and paste directly into the active app.</figcaption>
+      </figure>
+
+      <section id="features">
+        <h2>Features</h2>
+
+        <h3>Find and paste</h3>
+        <ul>
+          <li><strong>Open from anywhere</strong>: Press <kbd>⌥V</kbd> (or your custom shortcut). Klipboard pastes the chosen item straight into whatever app you were using.</li>
+          <li><strong>Search as you type</strong>: Filter through text contents, file names, custom labels, notes, and the application you copied from.</li>
+          <li><strong>Type filters</strong>: Switch between All, Text, Links, Images, Files, Colors, and Snippets using the filter chips or with <kbd>⌘←</kbd> and <kbd>⌘→</kbd>.</li>
+          <li><strong>Quick paste</strong>: Press <kbd>⌘1</kbd>-<kbd>⌘9</kbd> to paste one of the first nine items directly without navigating.</li>
+          <li><strong>Paste plain text</strong>: Hold Shift when pasting (<kbd>⇧↩</kbd> or <kbd>⇧</kbd>-click) to strip styling, or turn on plain text pasting by default in Settings.</li>
+          <li><strong>Full previews</strong>: Press <kbd>Space</kbd> (when search is clear) or <kbd>⌘Y</kbd> to inspect complete text, full images, Quick Look documents, hex and RGB color codes, and notes. Optional preview on hover.</li>
+          <li><strong>Resizable window</strong>: Drag any edge to resize the panel. Klipboard preserves your chosen window dimensions across launches.</li>
+        </ul>
+
+        <h3>What it keeps</h3>
+        <ul>
+          <li><strong>All clip types</strong>: Remembers plain text, rich text, links, images, colors, and files. Multiple files copied together are kept as a single history item.</li>
+          <li><strong>Automatic screenshots</strong>: Screenshots saved to files (<kbd>⌘⇧3</kbd>, <kbd>⌘⇧4</kbd>, <kbd>⌘⇧5</kbd>) appear in your clipboard automatically, ready to paste. Can be turned off in Settings.</li>
+          <li><strong>Move to top on copy</strong>: Copying an item already in your history moves it back to the top instead of creating a duplicate.</li>
+          <li><strong>Copied files stay working</strong>: Klipboard keeps a local copy up to a size you specify, so files still paste even if the original file is moved or deleted. On APFS volumes, this takes no additional disk space.</li>
+          <li><strong>Rename and notes</strong>: Right-click any clip to rename it or add a personal note. Both are indexed in search and shown in previews.</li>
+          <li><strong>Snippets</strong>: Keep frequently used text on hand, like postal addresses or canned replies. Add them in Settings or right-click any clip to save it as a snippet.</li>
+          <li><strong>Pins and favorites</strong>: Pin or favorite clips so they are never removed by history limits or auto-cleanups.</li>
+          <li><strong>Paste stack</strong>: Turn on Paste Stack from the menu bar, copy several items in sequence, and press <kbd>⌃⌥V</kbd> to paste them in the order you copied them. The menu bar icon shows how many items remain.</li>
+        </ul>
+
+        <h3>Privacy and control</h3>
+        <ul>
+          <li><strong>Password manager skipping</strong>: Automatically ignores passwords copied from 1Password, Bitwarden, Apple Keychain, and apps using standard nspasteboard.org markers.</li>
+          <li><strong>Pause recording</strong>: Pause tracking from the menu bar or a recorded shortcut. Anything copied while paused is never saved.</li>
+          <li><strong>Ignore apps</strong>: Exclude specific applications from ever saving clipboard items.</li>
+          <li><strong>History limits and auto-delete</strong>: Set any clip limit or keep it unlimited. Old items can be deleted automatically after 1, 7, 30, or a custom number of days.</li>
+          <li><strong>Clear history</strong>: Clear your history from the menu bar anytime, with an option to keep your pinned and favorite items intact.</li>
+          <li><strong>Backup and restore</strong>: Export history, snippets, and cached files into a single <kbd>.klipboard</kbd> archive, or import one from Settings.</li>
+          <li><strong>Offline by design</strong>: No network requests, accounts, or telemetry. All data stays locally on your Mac in <code>~/Library/Application Support/Klipboard/</code>.</li>
+        </ul>
+
+        <h3>Settings</h3>
+        <p>
+          Klipboard lives in your menu bar and stays out of the Dock. It starts at login, uses around 40 MB of RAM, and sits close to 0% CPU while idle. Every limit and shortcut can be customized in Settings (<kbd>⌘,</kbd>):
+        </p>
+
+        <table class="settings-table">
+          <thead>
+            <tr>
+              <th class="col-tab">Tab</th>
+              <th>Options</th>
+            </tr>
+          </thead>
           <tbody>
             <tr>
-              <td>Open or close Klipboard</td>
-              <td><kbd>⌥ V</kbd></td>
+              <td class="col-tab">General</td>
+              <td>History size limit, auto-delete duration, screenshot capture, file cache limits, plain text defaults, quick paste modifier keys, hover preview delay, automatic Sparkle updates, backup import and export, and permissions check.</td>
             </tr>
             <tr>
-              <td>Move through your history</td>
-              <td><kbd>↑</kbd> <kbd>↓</kbd></td>
+              <td class="col-tab">Shortcuts</td>
+              <td>Custom shortcut recording for Open Klipboard, Paste Next from Stack, Start or Stop Paste Stack, and Pause or Resume Recording.</td>
             </tr>
             <tr>
-              <td>Paste the selected item</td>
-              <td><kbd>↵ Return</kbd> or click</td>
+              <td class="col-tab">Privacy</td>
+              <td>Password manager exclusion, ignored applications list, maximum text size, maximum image size, and clipboard polling frequency.</td>
             </tr>
             <tr>
-              <td>Paste as plain text</td>
-              <td><kbd>⇧ ↵</kbd> or <kbd>⇧</kbd>-click</td>
-            </tr>
-            <tr>
-              <td>Paste item 1 to 9</td>
-              <td><kbd>⌘ 1</kbd> … <kbd>⌘ 9</kbd></td>
-            </tr>
-            <tr>
-              <td>Switch filter</td>
-              <td><kbd>⌘ ←</kbd> <kbd>⌘ →</kbd></td>
-            </tr>
-            <tr>
-              <td>Preview the selected item</td>
-              <td><kbd>Space</kbd> or <kbd>⌘ Y</kbd></td>
-            </tr>
-            <tr>
-              <td>Paste next from the paste stack</td>
-              <td><kbd>⌃ ⌥ V</kbd></td>
-            </tr>
-            <tr>
-              <td>Delete the selected item</td>
-              <td><kbd>⌘ ⌫</kbd></td>
-            </tr>
-            <tr>
-              <td>Close without pasting</td>
-              <td><kbd>Esc</kbd></td>
-            </tr>
-            <tr>
-              <td>Pin, favorite, save as snippet, and more</td>
-              <td>Right-click</td>
+              <td class="col-tab">Snippets</td>
+              <td>Create, edit, and organize saved snippets.</td>
             </tr>
           </tbody>
         </table>
-      </div>
 
-      <div id="install" class="box-panel">
-        <h3>Installation</h3>
-        <p class="sub">Two ways to install — pick whichever you like.</p>
-        <div style="font-size: 12px; font-weight: 600; color: var(--text); margin-bottom: 6px;">Option A — Paste this into Terminal (easiest)</div>
-        <div class="terminal-box" style="margin-top: 0; margin-bottom: 18px;">
-          <span style="overflow-x: auto; white-space: nowrap;">curl -fsSL https://klipboard-beryl.vercel.app/install.sh | bash</span>
-          <button class="copy-btn" data-copy="curl -fsSL https://klipboard-beryl.vercel.app/install.sh | bash" type="button">Copy</button>
-        </div>
-        <div style="font-size: 12px; font-weight: 600; color: var(--text); margin-bottom: 10px;">Option B — Download</div>
-        <ol class="install-steps">
-          <li><span>Click <a href="#download" style="color: var(--text); text-decoration: underline;">Download Klipboard</a> at the top of this page and open the downloaded file.</span></li>
-          <li><span>Drag <strong>Klipboard</strong> into your <strong>Applications</strong> folder.</span></li>
-          <li><span>If macOS says <strong>“Klipboard” Not Opened</strong>, click <strong>Done</strong>, then go to <strong>System Settings → Privacy &amp; Security</strong> and click <strong>Open Anyway</strong>. Or paste this into Terminal:</span></li>
-        </ol>
-        <div class="terminal-box">
-          <span style="overflow-x: auto; white-space: nowrap;">xattr -cr /Applications/Klipboard.app &amp;&amp; open /Applications/Klipboard.app</span>
-          <button class="copy-btn" data-copy="xattr -cr /Applications/Klipboard.app && open /Applications/Klipboard.app" type="button">Copy</button>
-        </div>
-        <div style="font-size: 12px; font-weight: 600; color: var(--text); margin: 18px 0 10px;">After installing</div>
-        <ol class="install-steps">
-          <li><span>The first time you paste, click <strong>Open System Settings</strong> and turn on <strong>Klipboard</strong> under <strong>Privacy &amp; Security → Accessibility</strong>. Then quit and reopen Klipboard.</span></li>
-          <li><span>If macOS asks to let Klipboard access your <strong>Desktop</strong> folder, click <strong>Allow</strong> so your screenshots are saved.</span></li>
-          <li><span>That's it. Klipboard starts by itself when you log in. Click its menu-bar icon for <strong>Settings</strong>, <strong>Paste Stack</strong>, <strong>Pause</strong> and <strong>Clear History</strong>.</span></li>
-        </ol>
-      </div>
-    </section>
-  </main>
+        <figure class="shot shot-small">
+          <img src="screenshot-menu.png" width="772" height="596" alt="Klipboard menu bar menu" />
+          <figcaption>The menu bar menu provides quick access to Settings, Paste Stack, Pause, and updates.</figcaption>
+        </figure>
+      </section>
 
-  <footer>
-    <div class="footer-inner">
-      <span>Klipboard · Free &amp; open source · Built by Abhishek Hiremath</span>
-      <a href="https://github.com/akai-49/Klipboard">GitHub</a>
-    </div>
-  </footer>
+      <section id="shortcuts">
+        <h2>Keyboard shortcuts</h2>
+        <p>Shortcuts can be customized in Settings.</p>
+
+        <div class="table-wrap">
+          <table class="shortcut-table">
+            <thead>
+              <tr>
+                <th class="col-key">Shortcut</th>
+                <th>Action</th>
+              </tr>
+            </thead>
+            <tbody>
+              <tr>
+                <td class="col-key"><kbd>⌥V</kbd></td>
+                <td>Open or close Klipboard</td>
+              </tr>
+              <tr>
+                <td class="col-key"><kbd>⌃⌥V</kbd></td>
+                <td>Paste next item from the paste stack</td>
+              </tr>
+              <tr>
+                <td class="col-key"><kbd>↑</kbd> <kbd>↓</kbd></td>
+                <td>Navigate through history</td>
+              </tr>
+              <tr>
+                <td class="col-key"><kbd>Return</kbd> or click</td>
+                <td>Paste selected item</td>
+              </tr>
+              <tr>
+                <td class="col-key"><kbd>⇧Return</kbd> or <kbd>⇧</kbd>-click</td>
+                <td>Paste as plain text</td>
+              </tr>
+              <tr>
+                <td class="col-key"><kbd>⌘1</kbd>-<kbd>⌘9</kbd></td>
+                <td>Paste item 1-9 directly</td>
+              </tr>
+              <tr>
+                <td class="col-key"><kbd>⌘←</kbd> <kbd>⌘→</kbd></td>
+                <td>Switch filter category</td>
+              </tr>
+              <tr>
+                <td class="col-key"><kbd>Space</kbd> or <kbd>⌘Y</kbd></td>
+                <td>Show or hide preview</td>
+              </tr>
+              <tr>
+                <td class="col-key"><kbd>⌘⌫</kbd></td>
+                <td>Delete selected item</td>
+              </tr>
+              <tr>
+                <td class="col-key"><kbd>Esc</kbd></td>
+                <td>Close preview, then close the panel</td>
+              </tr>
+              <tr>
+                <td class="col-key">Right-click</td>
+                <td>Context menu: paste plain text, pin, favorite, rename, edit note, save as snippet, reveal in Finder, preview, delete</td>
+              </tr>
+            </tbody>
+          </table>
+        </div>
+      </section>
+
+      <section id="install">
+        <h2>Installation</h2>
+        <p>Updates install automatically in the background after this version via Sparkle.</p>
+
+        <h3>Homebrew Cask</h3>
+        <p>If you use Homebrew, install the cask directly:</p>
+        <div class="terminal-row">
+          <code>brew install --cask akai-49/klipboard/klipboard</code>
+          <button type="button" class="copy-btn" data-copy="brew install --cask akai-49/klipboard/klipboard">Copy</button>
+        </div>
+
+        <h3>Terminal installer</h3>
+        <p>A single command that downloads the DMG, installs Klipboard to your Applications folder, removes the macOS quarantine attribute, and opens the app:</p>
+        <div class="terminal-row">
+          <code>curl -fsSL https://klipboard-beryl.vercel.app/install.sh | bash</code>
+          <button type="button" class="copy-btn" data-copy="curl -fsSL https://klipboard-beryl.vercel.app/install.sh | bash">Copy</button>
+        </div>
+
+        <h3>Direct download</h3>
+        <p>
+          Download <a href="Klipboard.dmg" download>Klipboard.dmg</a> (or visit <a href="https://github.com/akai-49/Klipboard/releases/latest">GitHub Releases</a>). Open the disk image and drag Klipboard to your Applications folder.
+        </p>
+
+        <div class="note-box">
+          <p><strong>First launch on macOS (Gatekeeper note):</strong></p>
+          <p>Because Klipboard is a personal open-source project and is not signed with a paid Apple Developer certificate, macOS may show a dialog saying the app was blocked.</p>
+          <ul>
+            <li>Right-click (or Control-click) <strong>Klipboard.app</strong> in Finder, choose <strong>Open</strong>, and click <strong>Open</strong> in the prompt.</li>
+            <li>Or open <strong>System Settings &gt; Privacy &amp; Security</strong>, scroll down to the Security section, and click <strong>Open Anyway</strong>.</li>
+            <li>Or paste this command into Terminal to clear the attribute:</li>
+          </ul>
+          <div class="terminal-row" style="background: var(--surface); margin-top: 10px;">
+            <code>xattr -cr /Applications/Klipboard.app &amp;&amp; open /Applications/Klipboard.app</code>
+            <button type="button" class="copy-btn" data-copy="xattr -cr /Applications/Klipboard.app &amp;&amp; open /Applications/Klipboard.app">Copy</button>
+          </div>
+        </div>
+
+        <h3>Permissions</h3>
+        <p>
+          Klipboard requires <strong>Accessibility</strong> permission (named <em>Device Control and Data Access</em> on newer macOS versions) to paste clips directly into your active window. Without it, clicking an item copies it to your clipboard so you can press <kbd>⌘V</kbd> manually.
+        </p>
+        <p>
+          On first launch, a welcome window guides you through granting this permission in System Settings. If permissions are ever lost after rebuilding or updating, you can open the window again from the menu bar under <strong>Permissions...</strong>, or reset and re-grant using Terminal:
+        </p>
+        <div class="terminal-row">
+          <code>tccutil reset All com.abhishek.Klipboard</code>
+          <button type="button" class="copy-btn" data-copy="tccutil reset All com.abhishek.Klipboard">Copy</button>
+        </div>
+        <p>
+          If macOS asks for permission to access your Desktop folder, allow it so screenshots you capture can be saved to your clipboard history.
+        </p>
+
+        <h3>Build from source</h3>
+        <p>
+          Requires macOS 14.0 or later and Xcode Command Line Tools (<code>xcode-select --install</code>). Clone the repository from <a href="https://github.com/akai-49/Klipboard">GitHub</a> and run:
+        </p>
+        <div class="terminal-row">
+          <code>./build-release.sh</code>
+          <button type="button" class="copy-btn" data-copy="./build-release.sh">Copy</button>
+        </div>
+      </section>
+
+      <section id="requirements">
+        <h2>System requirements</h2>
+        <ul>
+          <li>macOS 14.0 Sonoma or later</li>
+          <li>Universal binary running natively on Apple Silicon and Intel Macs</li>
+          <li>Memory: approximately 40 MB of RAM</li>
+          <li>Completely offline, no telemetry or network traffic</li>
+        </ul>
+      </section>
+    </main>
+
+    <footer>
+      <span>Built by Abhishek Hiremath</span>
+      <a href="https://github.com/akai-49/Klipboard">GitHub repository</a>
+    </footer>
+  </div>
 
   <script>
-    document.querySelectorAll('.copy-btn').forEach((btn) => {
-      btn.addEventListener('click', () => {
-        navigator.clipboard.writeText(btn.dataset.copy);
-        btn.textContent = 'Copied';
-        setTimeout(() => { btn.textContent = 'Copy'; }, 1600);
+    document.querySelectorAll('.copy-btn').forEach(function(button) {
+      button.addEventListener('click', function() {
+        var text = button.getAttribute('data-copy');
+        if (!text) return;
+        navigator.clipboard.writeText(text).then(function() {
+          var original = button.textContent;
+          button.textContent = 'Copied';
+          setTimeout(function() {
+            button.textContent = original;
+          }, 1500);
+        });
       });
     });
   </script>

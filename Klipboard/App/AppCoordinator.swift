@@ -2,16 +2,21 @@ import AppKit
 import Carbon.HIToolbox
 import Combine
 import ServiceManagement
+import Sparkle
 import SwiftUI
 
 @MainActor
-final class AppCoordinator: NSObject, ObservableObject {
+final class AppCoordinator: NSObject, ObservableObject, NSWindowDelegate {
     let store = ClipboardStore()
     let snippets = SnippetStore()
     let viewModel: ClipboardViewModel
     let hotkey = GlobalHotkey()
+    let updaterController: SPUStandardUpdaterController
+    let updaterModel: UpdaterSettingsModel
     private var panel: FloatingPanel?
     private var settingsWindow: NSWindow?
+    private var welcomeWindow: NSWindow?
+    private var hasPromptedOnLaunch = false
     private var previousApp: NSRunningApplication?
     private var statusItem: NSStatusItem?
     private var panelKeyMonitor: Any?
@@ -26,9 +31,15 @@ final class AppCoordinator: NSObject, ObservableObject {
 
     override init() {
         viewModel = ClipboardViewModel(store: store, snippets: snippets)
+        let controller = SPUStandardUpdaterController(startingUpdater: true, updaterDelegate: nil, userDriverDelegate: nil)
+        updaterController = controller
+        updaterModel = UpdaterSettingsModel(updater: controller.updater)
         super.init()
         viewModel.onRestoreFocus = { [weak self] in
             self?.restorePreviousAppFocus()
+        }
+        viewModel.onAccessibilityNeeded = { [weak self] in
+            self?.showWelcomeWindow(reason: .accessibilityNeeded)
         }
     }
 
@@ -36,7 +47,6 @@ final class AppCoordinator: NSObject, ObservableObject {
         setupStatusItem()
         hotkey.onTrigger = { [weak self] action in self?.perform(action) }
         startHotkeys()
-        PasteboardWriter.ensureAccessibility(prompt: true)
 
         // Any setting change (Settings window, pause toggle) re-applies here.
         NotificationCenter.default.publisher(for: UserDefaults.didChangeNotification)
@@ -52,19 +62,40 @@ final class AppCoordinator: NSObject, ObservableObject {
         viewModel.$isPreviewing
             .removeDuplicates()
             .sink { [weak self] previewing in
-                self?.panel?.setContentWidth(PanelLayout.width(previewing: previewing))
+                let base = Prefs.panelWidth
+                let targetWidth = PanelLayout.width(baseWidth: base, previewing: previewing)
+                self?.panel?.setContentWidth(targetWidth, isPreviewing: previewing)
             }
             .store(in: &cancellables)
 
-        // First run: enable launch-at-login and show the panel once. Later launches
-        // (e.g. at login) stay silent in the menu bar and respect the user's toggle.
+        // First run: enable launch-at-login and show the welcome window once. Later launches
+        // (e.g. at login) stay silent in the menu bar unless accessibility is missing.
         let defaults = UserDefaults.standard
         let isTestHost = ProcessInfo.processInfo.environment["XCTestConfigurationFilePath"] != nil
-        if !isTestHost, !defaults.bool(forKey: "didFirstLaunch") {
-            defaults.set(true, forKey: "didFirstLaunch")
-            try? SMAppService.mainApp.register()
-            rebuildMenu()
-            showPanel()
+        if !isTestHost {
+            let isFirstLaunch = !defaults.bool(forKey: "didFirstLaunch")
+            if isFirstLaunch {
+                defaults.set(true, forKey: "didFirstLaunch")
+                Prefs.hasCompletedWelcome = false
+                LaunchAtLogin.setEnabled(true)
+                rebuildMenu()
+            } else if WelcomeLogic.shouldMigrateExistingUser(
+                didFirstLaunch: defaults.bool(forKey: "didFirstLaunch"),
+                hasCompletedWelcomeObject: defaults.object(forKey: Prefs.Key.hasCompletedWelcome)
+            ) {
+                // Existing user upgrade: do not show onboarding
+                Prefs.hasCompletedWelcome = true
+            }
+
+            if let reason = WelcomeLogic.launchAction(
+                hasCompletedWelcome: Prefs.hasCompletedWelcome,
+                isAccessibilityTrusted: AXIsProcessTrusted()
+            ) {
+                if !hasPromptedOnLaunch {
+                    hasPromptedOnLaunch = true
+                    showWelcomeWindow(reason: reason)
+                }
+            }
         }
     }
 
@@ -141,13 +172,23 @@ final class AppCoordinator: NSObject, ObservableObject {
         menu.addItem(item("Clear History…", #selector(handleClearHistory)))
         menu.addItem(.separator())
 
+        let updateItem = NSMenuItem(
+            title: "Check for Updates…",
+            action: #selector(SPUStandardUpdaterController.checkForUpdates(_:)),
+            keyEquivalent: ""
+        )
+        updateItem.target = updaterController
+        menu.addItem(updateItem)
+
         let settings = item("Settings…", #selector(handleOpenSettings))
         settings.keyEquivalent = ","
         settings.keyEquivalentModifierMask = [.command]
         menu.addItem(settings)
 
+        menu.addItem(item("Permissions…", #selector(handleOpenPermissions)))
+
         let loginItem = item("Launch at Login", #selector(handleToggleLaunchAtLogin))
-        loginItem.state = SMAppService.mainApp.status == .enabled ? .on : .off
+        loginItem.state = LaunchAtLogin.isEnabled ? .on : .off
         menu.addItem(loginItem)
 
         menu.addItem(.separator())
@@ -193,10 +234,18 @@ final class AppCoordinator: NSObject, ObservableObject {
     @objc private func handleOpenSettings() {
         panel?.dismiss()
         if settingsWindow == nil {
-            let view = SettingsView(snippets: snippets) { [weak self] recording in
-                guard let self else { return }
-                if recording { self.hotkey.stop() } else { self.startHotkeys() }
-            }
+            let view = SettingsView(
+                updaterModel: updaterModel,
+                store: store,
+                snippets: snippets,
+                onOpenWelcome: { [weak self] in
+                    self?.showWelcomeWindow(reason: .accessibilityNeeded)
+                },
+                onRecordingChange: { [weak self] recording in
+                    guard let self else { return }
+                    if recording { self.hotkey.stop() } else { self.startHotkeys() }
+                }
+            )
             let window = NSWindow(contentViewController: NSHostingController(rootView: view))
             window.title = "Klipboard Settings"
             window.styleMask = [.titled, .closable, .miniaturizable]
@@ -209,16 +258,67 @@ final class AppCoordinator: NSObject, ObservableObject {
     }
 
     @objc private func handleToggleLaunchAtLogin() {
-        let service = SMAppService.mainApp
-        if service.status == .enabled {
-            try? service.unregister()
-        } else {
-            try? service.register()
-            if service.status == .requiresApproval {
-                SMAppService.openSystemSettingsLoginItems()
+        LaunchAtLogin.setEnabled(!LaunchAtLogin.isEnabled)
+        rebuildMenu()
+    }
+
+    @objc private func handleOpenPermissions() {
+        showWelcomeWindow(reason: Prefs.hasCompletedWelcome ? .accessibilityNeeded : .firstLaunch)
+    }
+
+    func showWelcomeWindow(reason: WelcomePromptReason = .firstLaunch) {
+        panel?.dismiss()
+        if welcomeWindow == nil {
+            let window = NSWindow(
+                contentRect: NSRect(x: 0, y: 0, width: 440, height: 280),
+                styleMask: [.titled, .closable],
+                backing: .buffered,
+                defer: false
+            )
+            window.isReleasedWhenClosed = false
+            window.delegate = self
+            welcomeWindow = window
+        }
+        welcomeWindow?.title = reason == .firstLaunch ? "Welcome to Klipboard" : "Accessibility Permission"
+        let view = WelcomeView(
+            reason: reason,
+            onDone: { [weak self] in
+                self?.closeWelcomeWindow()
+            },
+            onLaunchAtLoginChanged: { [weak self] in
+                self?.rebuildMenu()
+            }
+        )
+        welcomeWindow?.contentViewController = NSHostingController(rootView: view)
+        welcomeWindow?.center()
+        NSApp.activate(ignoringOtherApps: true)
+        welcomeWindow?.makeKeyAndOrderFront(nil)
+    }
+
+    private func closeWelcomeWindow() {
+        Prefs.hasCompletedWelcome = true
+        if AXIsProcessTrusted() {
+            startHotkeys()
+        }
+        guard let window = welcomeWindow else { return }
+        welcomeWindow = nil
+        window.close()
+        window.contentViewController = nil
+    }
+
+    // MARK: NSWindowDelegate
+
+    nonisolated func windowWillClose(_ notification: Notification) {
+        MainActor.assumeIsolated {
+            if let window = notification.object as? NSWindow, window === self.welcomeWindow {
+                Prefs.hasCompletedWelcome = true
+                if AXIsProcessTrusted() {
+                    self.startHotkeys()
+                }
+                self.welcomeWindow?.contentViewController = nil
+                self.welcomeWindow = nil
             }
         }
-        rebuildMenu()
     }
 
     @objc private func handleQuit() {
@@ -249,7 +349,7 @@ final class AppCoordinator: NSObject, ObservableObject {
         }
         viewModel.isPreviewing = false
         viewModel.selectedIndex = 0
-        panel?.setContentWidth(PanelLayout.listWidth)
+        panel?.setContentWidth(Prefs.panelWidth, isPreviewing: false)
         panel?.showCentered()
     }
 

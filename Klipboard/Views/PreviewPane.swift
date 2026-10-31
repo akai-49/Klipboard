@@ -17,7 +17,25 @@ struct PreviewPane: View {
         VStack(alignment: .leading, spacing: 10) {
             switch entry {
             case .clip(let item):
+                if let name = item.customName, !name.isEmpty {
+                    Text(name).font(.headline)
+                }
                 content(for: item)
+                if let note = item.note, !note.isEmpty {
+                    Divider()
+                    VStack(alignment: .leading, spacing: 4) {
+                        HStack(spacing: 4) {
+                            Image(systemName: "note.text")
+                            Text("Note")
+                        }
+                        .font(.caption.weight(.semibold))
+                        .foregroundStyle(.secondary)
+
+                        Text(note)
+                            .font(.system(size: 12))
+                            .textSelection(.enabled)
+                    }
+                }
                 Divider()
                 details(for: item)
             case .snippet(let snippet):

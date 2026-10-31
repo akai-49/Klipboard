@@ -8,18 +8,30 @@ final class ClipboardStore {
     private let inMemory: Bool
     private var items: [ClipItem] = []
     private let storageURL: URL
-    private let imagesFolder = ClipItem.imagesFolder
-    private let filesFolder = ClipItem.filesFolder
+    private let imagesFolder: URL
+    private let filesFolder: URL
+
+    var currentImagesFolder: URL { imagesFolder }
+    var currentFilesFolder: URL { filesFolder }
+
     /// Copies of large files on slow (non-APFS) drives must not block JSON saves.
     private let fileCopyQueue = DispatchQueue(label: "Klipboard.store.files", qos: .utility)
     /// Disk writes happen off the main thread, in order.
     private let ioQueue = DispatchQueue(label: "Klipboard.store.io", qos: .utility)
 
-    init(inMemory: Bool = false) {
+    init(inMemory: Bool = false, folder: URL? = nil) {
         self.inMemory = inMemory
-        let folder = imagesFolder.deletingLastPathComponent()
-        try? FileManager.default.createDirectory(at: imagesFolder, withIntermediateDirectories: true)
-        self.storageURL = folder.appendingPathComponent("history.json")
+        let baseFolder = folder ?? ClipItem.imagesFolder.deletingLastPathComponent()
+        let images = baseFolder.appendingPathComponent("images", isDirectory: true)
+        let files = baseFolder.appendingPathComponent("files", isDirectory: true)
+        self.imagesFolder = images
+        self.filesFolder = files
+        self.storageURL = baseFolder.appendingPathComponent("history.json")
+
+        if !inMemory {
+            try? FileManager.default.createDirectory(at: images, withIntermediateDirectories: true)
+            try? FileManager.default.createDirectory(at: files, withIntermediateDirectories: true)
+        }
 
         if !inMemory,
            let data = try? Data(contentsOf: storageURL),
@@ -34,10 +46,50 @@ final class ClipboardStore {
     }
 
     func insert(_ item: ClipItem) {
+        if let existingIndex = items.firstIndex(where: { $0.hasSameContent(as: item) }) {
+            let existing = items.remove(at: existingIndex)
+            existing.createdAt = Date()
+            existing.sourceApp = item.sourceApp ?? existing.sourceApp
+            existing.sourceBundleID = item.sourceBundleID ?? existing.sourceBundleID
+
+            if item !== existing {
+                var orphanImages: [String] = []
+                if let file = item.imageFile, file != existing.imageFile {
+                    orphanImages.append(file)
+                }
+                var orphanFolders: [String] = []
+                if let folder = item.savedFilesFolder, folder != existing.savedFilesFolder {
+                    orphanFolders.append(folder)
+                }
+                removeStoredFilesByNames(images: orphanImages, folders: orphanFolders)
+            }
+
+            items.insert(existing, at: 0)
+            trimIfNeeded()
+            save()
+            return
+        }
+
         if item.type == .image { offloadImage(item) }
         if item.type == .file { saveFileCopies(of: item) }
         items.insert(item, at: 0)
         trimIfNeeded()
+        save()
+    }
+
+    /// Merges imported items without creating duplicates for already-existing IDs.
+    func importItems(_ newItems: [ClipItem], trim: Bool = false) {
+        let existingIDs = Set(items.map(\.id))
+        let additions = newItems.filter { !existingIDs.contains($0.id) }
+        guard !additions.isEmpty else { return }
+
+        // Migrate images stored inline by older versions out of the JSON.
+        additions.filter { $0.type == .image && $0.data != nil }.forEach(offloadImage)
+
+        items.append(contentsOf: additions)
+        if trim {
+            trimIfNeeded()
+        }
         save()
     }
 
@@ -106,6 +158,8 @@ final class ClipboardStore {
     /// Moves image bytes to their own file so they aren't held in RAM or rewritten with every save.
     private func offloadImage(_ item: ClipItem) {
         guard !inMemory, let data = item.data else { return }
+        if item.imageByteCount == nil { item.imageByteCount = data.count }
+        if item.contentHash == nil { item.contentHash = ClipItem.sha256Hex(for: data) }
         let name = "\(item.id.uuidString).png"
         let url = imagesFolder.appendingPathComponent(name)
         // Synchronous so the file exists before anything (paste, thumbnail) reads it.
@@ -174,12 +228,42 @@ final class ClipboardStore {
         return total
     }
 
+    static func isSafePathComponent(_ component: String) -> Bool {
+        guard !component.isEmpty,
+              !component.contains("/"),
+              !component.contains("\\"),
+              !component.contains(".."),
+              !component.hasPrefix("."),
+              component == (component as NSString).lastPathComponent else {
+            return false
+        }
+        return true
+    }
+
     private func removeStoredFiles(of removed: [ClipItem]) {
-        let urls = removed.compactMap { $0.imageFile.map(imagesFolder.appendingPathComponent) }
-            + removed.compactMap { $0.savedFilesFolder.map(filesFolder.appendingPathComponent) }
+        let images = removed.compactMap(\.imageFile)
+        let folders = removed.compactMap(\.savedFilesFolder)
+        removeStoredFilesByNames(images: images, folders: folders)
+    }
+
+    private func removeStoredFilesByNames(images: [String], folders: [String]) {
+        let safeImages = images.filter(Self.isSafePathComponent)
+        let safeFolders = folders.filter(Self.isSafePathComponent)
+        let imgFolder = imagesFolder.standardizedFileURL.resolvingSymlinksInPath()
+        let flsFolder = filesFolder.standardizedFileURL.resolvingSymlinksInPath()
+        let urls = safeImages.map { imgFolder.appendingPathComponent($0) }
+            + safeFolders.map { flsFolder.appendingPathComponent($0) }
         guard !urls.isEmpty else { return }
         ioQueue.async {
-            urls.forEach { try? FileManager.default.removeItem(at: $0) }
+            for url in urls {
+                let standard = url.standardizedFileURL.resolvingSymlinksInPath()
+                let path = standard.path
+                let insideImages = path.hasPrefix(imgFolder.path + "/")
+                let insideFiles = path.hasPrefix(flsFolder.path + "/")
+                if insideImages || insideFiles {
+                    try? FileManager.default.removeItem(at: standard)
+                }
+            }
         }
     }
 

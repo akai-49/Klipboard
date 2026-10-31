@@ -2,12 +2,35 @@ import AppKit
 import SwiftUI
 
 enum PanelLayout {
-    static let listWidth: CGFloat = 560
-    static let previewWidth: CGFloat = 340
-    static let height: CGFloat = 420
+    static let defaultWidth: CGFloat = 560
+    static let defaultHeight: CGFloat = 420
+    static let minWidth: CGFloat = 460
+    static let minHeight: CGFloat = 300
+    static let minListWidth: CGFloat = 300
+    static let minPreviewWidth: CGFloat = 240
 
-    static func width(previewing: Bool) -> CGFloat {
-        previewing ? listWidth + previewWidth : listWidth
+    static var listWidth: CGFloat { defaultWidth }
+    static var previewWidth: CGFloat { defaultPreviewWidth }
+    static var defaultPreviewWidth: CGFloat { 340 }
+    static var height: CGFloat { defaultHeight }
+
+    /// Returns the portion of totalWidth allocated to the list when preview is open.
+    static func listWidth(for totalWidth: CGFloat) -> CGFloat {
+        let preview = previewWidth(for: totalWidth)
+        return max(minListWidth, totalWidth - preview)
+    }
+
+    /// Returns the portion of totalWidth allocated to the preview when preview is open.
+    static func previewWidth(for totalWidth: CGFloat) -> CGFloat {
+        let desired = round(totalWidth * 0.375)
+        return min(max(minPreviewWidth, desired), totalWidth - minListWidth)
+    }
+
+    /// Total width for preview toggle: expands when previewing opens, restores base width when closed.
+    static func width(baseWidth: CGFloat = defaultWidth, previewing: Bool) -> CGFloat {
+        if !previewing { return baseWidth }
+        let preview = max(minPreviewWidth, round(baseWidth * 0.6))
+        return baseWidth + preview
     }
 }
 
@@ -20,32 +43,40 @@ struct ClipboardPanelView: View {
     @State private var hoverTask: Task<Void, Never>?
 
     var body: some View {
-        HStack(spacing: 0) {
-            VStack(spacing: 0) {
-                TextField("Search clipboard history\u{2026}", text: $viewModel.searchText)
-                    .textFieldStyle(.plain)
-                    .font(.system(size: 15))
-                    .padding(12)
-                    .focused($isSearchFocused)
+        GeometryReader { geometry in
+            let totalWidth = geometry.size.width
+            let listWidth = viewModel.isPreviewing
+                ? PanelLayout.listWidth(for: totalWidth)
+                : totalWidth
+            let previewWidth = max(0, totalWidth - listWidth)
 
-                FilterBar(selection: $viewModel.filter)
+            HStack(spacing: 0) {
+                VStack(spacing: 0) {
+                    TextField("Search clipboard history\u{2026}", text: $viewModel.searchText)
+                        .textFieldStyle(.plain)
+                        .font(.system(size: 15))
+                        .padding(12)
+                        .focused($isSearchFocused)
 
-                Divider()
+                    FilterBar(selection: $viewModel.filter)
 
-                if viewModel.entries.isEmpty {
-                    emptyState
-                } else {
-                    list
+                    Divider()
+
+                    if viewModel.entries.isEmpty {
+                        emptyState
+                    } else {
+                        list
+                    }
+                }
+                .frame(width: listWidth)
+
+                if viewModel.isPreviewing {
+                    PreviewPane(entry: viewModel.selectedEntry)
+                        .frame(width: previewWidth)
                 }
             }
-            .frame(width: PanelLayout.listWidth)
-
-            if viewModel.isPreviewing {
-                PreviewPane(entry: viewModel.selectedEntry)
-                    .frame(width: PanelLayout.previewWidth)
-            }
         }
-        .frame(height: PanelLayout.height)
+        .frame(maxWidth: .infinity, maxHeight: .infinity)
         .onAppear { isSearchFocused = true }
         .onKeyPress(.escape) { dismiss(); return .handled }
         .onKeyPress(.downArrow) {
@@ -143,6 +174,8 @@ struct ClipboardPanelView: View {
             }
             Button(item.isPinned ? "Unpin" : "Pin") { viewModel.togglePin(item) }
             Button(item.isFavorite ? "Unfavorite" : "Favorite") { viewModel.toggleFavorite(item) }
+            Button("Rename…") { promptRename(for: item) }
+            Button("Edit Note…") { promptEditNote(for: item) }
             if item.type.hasPlainText {
                 Button("Save as Snippet") { viewModel.saveAsSnippet(item) }
             }
@@ -182,6 +215,45 @@ struct ClipboardPanelView: View {
     private func deleteSelected() {
         if let entry = viewModel.selectedEntry {
             viewModel.delete(entry)
+        }
+    }
+
+    private func promptRename(for item: ClipItem) {
+        promptTextInput(title: "Rename Item", message: "Enter a custom name (leave empty to clear):", initialValue: item.customName) { text in
+            guard let text else { return }
+            let trimmed = text.trimmingCharacters(in: .whitespacesAndNewlines)
+            viewModel.setCustomName(trimmed.isEmpty ? nil : trimmed, for: item)
+        }
+    }
+
+    private func promptEditNote(for item: ClipItem) {
+        promptTextInput(title: "Edit Note", message: "Enter a note for this item (leave empty to clear):", initialValue: item.note) { text in
+            guard let text else { return }
+            let trimmed = text.trimmingCharacters(in: .whitespacesAndNewlines)
+            viewModel.setNote(trimmed.isEmpty ? nil : trimmed, for: item)
+        }
+    }
+
+    private func promptTextInput(title: String, message: String, initialValue: String?, completion: @escaping (String?) -> Void) {
+        guard let window = NSApp.keyWindow ?? NSApp.windows.first(where: { $0 is FloatingPanel }) else {
+            completion(nil)
+            return
+        }
+        let alert = NSAlert()
+        alert.messageText = title
+        alert.informativeText = message
+        alert.addButton(withTitle: "OK")
+        alert.addButton(withTitle: "Cancel")
+        let input = NSTextField(frame: NSRect(x: 0, y: 0, width: 280, height: 24))
+        input.stringValue = initialValue ?? ""
+        alert.accessoryView = input
+        alert.window.initialFirstResponder = input
+        alert.beginSheetModal(for: window) { response in
+            if response == .alertFirstButtonReturn {
+                completion(input.stringValue)
+            } else {
+                completion(nil)
+            }
         }
     }
 }

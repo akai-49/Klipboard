@@ -22,9 +22,9 @@ final class GlobalHotkey {
             Prefs.shortcut(for: action).map { (action, $0) }
         }
         guard !combos.isEmpty else { return }
-        let allRegistered = setupCarbonHotkeys()
+        setupCarbonHotkeys()
         setupNSEventMonitors()
-        setupEventTap(promptIfNeeded: !allRegistered)
+        setupEventTap()
     }
 
     /// Carbon, the NSEvent monitor and the event tap can all see one keypress; fire once.
@@ -119,13 +119,8 @@ final class GlobalHotkey {
         }
     }
 
-    private func setupEventTap(promptIfNeeded: Bool) {
+    private func setupEventTap() {
         guard eventTap == nil else { return }
-
-        if promptIfNeeded && !AXIsProcessTrusted() {
-            let options = [kAXTrustedCheckOptionPrompt.takeUnretainedValue() as String: true] as CFDictionary
-            _ = AXIsProcessTrustedWithOptions(options)
-        }
 
         let mask = CGEventMask(1 << CGEventType.keyDown.rawValue)
         let selfPtr = Unmanaged.passUnretained(self).toOpaque()

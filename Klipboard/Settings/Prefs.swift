@@ -21,6 +21,9 @@ enum Prefs {
         static let saveScreenshots = "saveScreenshots"
         static let keepFileCopies = "keepFileCopies"
         static let maxFileCopyMB = "maxFileCopyMB"
+        static let panelWidth = "panelWidth"
+        static let panelHeight = "panelHeight"
+        static let hasCompletedWelcome = "hasCompletedWelcome"
         static func shortcut(_ action: HotkeyAction) -> String { "shortcut.\(action.rawValue)" }
     }
 
@@ -33,6 +36,8 @@ enum Prefs {
         static let maxItemMB = 15
         static let hoverDelay = 0.6
         static let maxFileCopyMB = 100
+        static let panelWidth: Double = 560
+        static let panelHeight: Double = 420
     }
 
     private static var defaults: UserDefaults { .standard }
@@ -57,6 +62,8 @@ enum Prefs {
             Key.saveScreenshots: true,
             Key.keepFileCopies: true,
             Key.maxFileCopyMB: Default.maxFileCopyMB,
+            Key.panelWidth: Default.panelWidth,
+            Key.panelHeight: Default.panelHeight,
         ]
         for action in HotkeyAction.allCases {
             values[Key.shortcut(action)] = KeyCombo.encode(action.defaultCombo)
@@ -90,6 +97,25 @@ enum Prefs {
     static var saveScreenshots: Bool { defaults.bool(forKey: Key.saveScreenshots) }
     static var previewOnHover: Bool { defaults.bool(forKey: Key.previewOnHover) }
     static var hoverDelay: TimeInterval { max(0, defaults.double(forKey: Key.hoverDelay)) }
+    static var panelWidth: CGFloat {
+        get {
+            let val = defaults.double(forKey: Key.panelWidth)
+            return val > 0 ? CGFloat(val) : CGFloat(Default.panelWidth)
+        }
+        set { defaults.set(Double(newValue), forKey: Key.panelWidth) }
+    }
+    static var panelHeight: CGFloat {
+        get {
+            let val = defaults.double(forKey: Key.panelHeight)
+            return val > 0 ? CGFloat(val) : CGFloat(Default.panelHeight)
+        }
+        set { defaults.set(Double(newValue), forKey: Key.panelHeight) }
+    }
+
+    static var hasCompletedWelcome: Bool {
+        get { defaults.bool(forKey: Key.hasCompletedWelcome) }
+        set { defaults.set(newValue, forKey: Key.hasCompletedWelcome) }
+    }
 
     static var ignoredApps: [String] {
         get { defaults.stringArray(forKey: Key.ignoredApps) ?? [] }

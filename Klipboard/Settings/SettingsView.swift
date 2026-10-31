@@ -1,15 +1,20 @@
 import AppKit
+import Combine
+import Sparkle
 import SwiftUI
 import UniformTypeIdentifiers
 
 struct SettingsView: View {
+    @ObservedObject var updaterModel: UpdaterSettingsModel
+    let store: ClipboardStore
     @ObservedObject var snippets: SnippetStore
+    var onOpenWelcome: (() -> Void)? = nil
     /// Global hotkeys must be released while a shortcut is being recorded.
     let onRecordingChange: (Bool) -> Void
 
     var body: some View {
         TabView {
-            GeneralSettings()
+            GeneralSettings(updaterModel: updaterModel, store: store, snippets: snippets, onOpenWelcome: onOpenWelcome)
                 .tabItem { Label("General", systemImage: "gearshape") }
             ShortcutSettings(onRecordingChange: onRecordingChange)
                 .tabItem { Label("Shortcuts", systemImage: "keyboard") }
@@ -18,13 +23,18 @@ struct SettingsView: View {
             SnippetSettings(store: snippets)
                 .tabItem { Label("Snippets", systemImage: "text.quote") }
         }
-        .frame(width: 560, height: 460)
+        .frame(width: 560, height: 490)
     }
 }
 
 // MARK: - General
 
 private struct GeneralSettings: View {
+    @ObservedObject var updaterModel: UpdaterSettingsModel
+    let store: ClipboardStore
+    @ObservedObject var snippets: SnippetStore
+    var onOpenWelcome: (() -> Void)? = nil
+
     @AppStorage(Prefs.Key.historyLimit) private var historyLimit = Prefs.Default.historyLimit
     @AppStorage(Prefs.Key.retentionDays) private var retentionDays = Prefs.Default.retentionDays
     @AppStorage(Prefs.Key.alwaysPlainText) private var alwaysPlainText = false
@@ -118,10 +128,91 @@ private struct GeneralSettings: View {
                 Text("Press Space (when search is empty) or ⌘Y to preview the selected item.")
                     .font(.caption).foregroundStyle(.secondary)
             }
+
+            Section("Updates") {
+                Toggle("Check for updates automatically", isOn: Binding(
+                    get: { updaterModel.automaticallyChecksForUpdates },
+                    set: { updaterModel.setAutomaticallyChecks($0) }
+                ))
+                if updaterModel.automaticallyChecksForUpdates {
+                    Picker("Check every", selection: Binding(
+                        get: { updaterModel.updateCheckInterval },
+                        set: { updaterModel.setCheckInterval($0) }
+                    )) {
+                        Text("Daily").tag(86_400)
+                        Text("Weekly").tag(604_800)
+                    }
+                    Toggle("Download and install updates automatically", isOn: Binding(
+                        get: { updaterModel.automaticallyDownloadsUpdates },
+                        set: { updaterModel.setAutomaticallyDownloads($0) }
+                    ))
+                }
+            }
+
+            Section("Backup") {
+                HStack(spacing: 12) {
+                    Button("Export History…") { exportHistory() }
+                    Button("Import…") { importHistory() }
+                }
+                Text("Export history, snippets, and saved files into a single .klipboard backup file, or merge from one.")
+                    .font(.caption).foregroundStyle(.secondary)
+            }
+
+            Section("Permissions") {
+                LabeledContent("Setup & Permissions") {
+                    Button("Show Welcome…") {
+                        onOpenWelcome?()
+                    }
+                }
+                Text("Review accessibility permissions and first-launch setup.")
+                    .font(.caption).foregroundStyle(.secondary)
+            }
         }
         .formStyle(.grouped)
         .onAppear {
             retentionChoice = Self.retentionPresets.contains(retentionDays) ? retentionDays : Self.customRetention
+        }
+    }
+
+    private func exportHistory() {
+        let panel = NSSavePanel()
+        panel.title = "Export Clipboard History"
+        panel.nameFieldStringValue = "Klipboard-History.klipboard"
+        let klipType = UTType(filenameExtension: "klipboard") ?? .data
+        panel.allowedContentTypes = [klipType]
+        panel.allowsOtherFileTypes = true
+        panel.canCreateDirectories = true
+        guard panel.runModal() == .OK, let url = panel.url else { return }
+
+        do {
+            try HistoryArchiver.exportArchive(store: store, snippetStore: snippets, to: url)
+        } catch {
+            let alert = NSAlert(error: error)
+            alert.runModal()
+        }
+    }
+
+    private func importHistory() {
+        let panel = NSOpenPanel()
+        panel.title = "Import Clipboard History"
+        let klipType = UTType(filenameExtension: "klipboard") ?? .data
+        panel.allowedContentTypes = [klipType]
+        panel.allowsOtherFileTypes = true
+        panel.allowsMultipleSelection = false
+        panel.canChooseDirectories = false
+        guard panel.runModal() == .OK, let url = panel.url else { return }
+
+        do {
+            let result = try HistoryArchiver.importArchive(from: url, store: store, snippetStore: snippets)
+            NotificationCenter.default.post(name: UserDefaults.didChangeNotification, object: nil)
+            let alert = NSAlert()
+            alert.messageText = "Import Complete"
+            alert.informativeText = "Imported \(result.importedClips) new history item\(result.importedClips == 1 ? "" : "s") and \(result.importedSnippets) snippet\(result.importedSnippets == 1 ? "" : "s")."
+            alert.addButton(withTitle: "OK")
+            alert.runModal()
+        } catch {
+            let alert = NSAlert(error: error)
+            alert.runModal()
         }
     }
 
@@ -131,6 +222,52 @@ private struct GeneralSettings: View {
                 Text("\(choice.title)  \(choice.symbol)\(suffix)").tag(choice.rawValue)
             }
         }
+    }
+}
+
+@MainActor
+final class UpdaterSettingsModel: ObservableObject {
+    private let updater: SPUUpdater
+    @Published var automaticallyChecksForUpdates: Bool
+    @Published var updateCheckInterval: Int
+    @Published var automaticallyDownloadsUpdates: Bool
+    private var cancellables = Set<AnyCancellable>()
+
+    init(updater: SPUUpdater) {
+        self.updater = updater
+        self.automaticallyChecksForUpdates = updater.automaticallyChecksForUpdates
+        self.updateCheckInterval = Int(updater.updateCheckInterval) == 604_800 ? 604_800 : 86_400
+        self.automaticallyDownloadsUpdates = updater.automaticallyDownloadsUpdates
+
+        updater.publisher(for: \.automaticallyChecksForUpdates)
+            .receive(on: RunLoop.main)
+            .sink { [weak self] in self?.automaticallyChecksForUpdates = $0 }
+            .store(in: &cancellables)
+
+        updater.publisher(for: \.updateCheckInterval)
+            .receive(on: RunLoop.main)
+            .sink { [weak self] in self?.updateCheckInterval = Int($0) == 604_800 ? 604_800 : 86_400 }
+            .store(in: &cancellables)
+
+        updater.publisher(for: \.automaticallyDownloadsUpdates)
+            .receive(on: RunLoop.main)
+            .sink { [weak self] in self?.automaticallyDownloadsUpdates = $0 }
+            .store(in: &cancellables)
+    }
+
+    func setAutomaticallyChecks(_ value: Bool) {
+        updater.automaticallyChecksForUpdates = value
+        automaticallyChecksForUpdates = value
+    }
+
+    func setCheckInterval(_ value: Int) {
+        updater.updateCheckInterval = TimeInterval(value)
+        updateCheckInterval = value
+    }
+
+    func setAutomaticallyDownloads(_ value: Bool) {
+        updater.automaticallyDownloadsUpdates = value
+        automaticallyDownloadsUpdates = value
     }
 }
 

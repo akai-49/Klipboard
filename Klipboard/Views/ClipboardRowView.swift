@@ -24,7 +24,7 @@ struct ClipboardRowView: View {
         HStack(spacing: 10) {
             thumbnail
             VStack(alignment: .leading, spacing: 2) {
-                Text(item.previewText)
+                Text(item.displayTitle)
                     .lineLimit(1)
                     .font(.system(size: 13))
                 HStack(spacing: 4) {

@@ -26,5 +26,9 @@
 	<true/>
 	<key>NSHumanReadableCopyright</key>
 	<string></string>
+	<key>SUFeedURL</key>
+	<string>https://github.com/akai-49/Klipboard/releases/latest/download/appcast.xml</string>
+	<key>SUPublicEDKey</key>
+	<string>J33A69WX1gOngjrcoES+PpHGRkbg/DSzWQrpbXrkUqw=</string>
 </dict>
 </plist>

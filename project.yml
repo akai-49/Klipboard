@@ -3,17 +3,23 @@ options:
   bundleIdPrefix: com.abhishek.Klipboard
   deploymentTarget:
     macOS: "14.0"
+packages:
+  Sparkle:
+    url: https://github.com/sparkle-project/Sparkle
+    exactVersion: 2.10.1
 targets:
   Klipboard:
     type: application
     platform: macOS
     sources:
       - path: Klipboard
+    dependencies:
+      - package: Sparkle
     settings:
       base:
         PRODUCT_BUNDLE_IDENTIFIER: com.abhishek.Klipboard
-        MARKETING_VERSION: "0.2.0"
-        CURRENT_PROJECT_VERSION: "2"
+        MARKETING_VERSION: "0.3.0"
+        CURRENT_PROJECT_VERSION: "3"
         SWIFT_VERSION: "5.0"
         ENABLE_HARDENED_RUNTIME: true
         CODE_SIGN_STYLE: Automatic
@@ -22,6 +28,8 @@ targets:
       properties:
         LSUIElement: true
         NSHumanReadableCopyright: ""
+        SUFeedURL: https://github.com/akai-49/Klipboard/releases/latest/download/appcast.xml
+        SUPublicEDKey: J33A69WX1gOngjrcoES+PpHGRkbg/DSzWQrpbXrkUqw=
     entitlements:
       path: Klipboard/Resources/Klipboard.entitlements
       properties:
@@ -33,6 +41,7 @@ targets:
       - path: KlipboardTests
     dependencies:
       - target: Klipboard
+      - package: Sparkle
     settings:
       base:
         SWIFT_VERSION: "5.0"

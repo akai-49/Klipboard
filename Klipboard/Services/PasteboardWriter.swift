@@ -53,15 +53,7 @@ enum PasteboardWriter {
     }
 
     /// Synthetic key events are silently dropped without Accessibility permission.
-    @discardableResult
-    static func ensureAccessibility(prompt: Bool) -> Bool {
-        if AXIsProcessTrusted() { return true }
-        if prompt {
-            let options = [kAXTrustedCheckOptionPrompt.takeUnretainedValue() as String: true] as CFDictionary
-            _ = AXIsProcessTrustedWithOptions(options)
-        }
-        return false
-    }
+    static var isAccessibilityTrusted: Bool { AXIsProcessTrusted() }
 
     /// Waits (up to ~500ms) for `app` to become active, then sends ⌘V to it.
     static func paste(into app: NSRunningApplication?, attempts: Int = 25) {

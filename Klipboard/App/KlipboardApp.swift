@@ -4,8 +4,25 @@ import Darwin
 
 @main
 enum KlipboardApp {
+    private static var isRunningTests: Bool {
+        #if DEBUG
+        return ProcessInfo.processInfo.environment["XCTestBundlePath"] != nil ||
+               ProcessInfo.processInfo.environment["XCTestSessionIdentifier"] != nil ||
+               ProcessInfo.processInfo.environment["XCTestConfigurationFilePath"] != nil
+        #else
+        return false
+        #endif
+    }
+
     static func main() {
         Prefs.registerDefaults()
+
+        if isRunningTests {
+            let app = NSApplication.shared
+            app.run()
+            return
+        }
+
         #if DEBUG
         ensureSingleInstanceAndCleanDerivedData()
         #else
