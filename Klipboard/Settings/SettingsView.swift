@@ -40,8 +40,6 @@ private struct GeneralSettings: View {
     @AppStorage(Prefs.Key.alwaysPlainText) private var alwaysPlainText = false
     @AppStorage(Prefs.Key.plainTextModifier) private var plainTextModifier = ModifierChoice.shift.rawValue
     @AppStorage(Prefs.Key.quickPasteModifier) private var quickPasteModifier = ModifierChoice.command.rawValue
-    @AppStorage(Prefs.Key.previewOnHover) private var previewOnHover = false
-    @AppStorage(Prefs.Key.hoverDelay) private var hoverDelay = Prefs.Default.hoverDelay
     @AppStorage(Prefs.Key.saveScreenshots) private var saveScreenshots = true
     @AppStorage(Prefs.Key.keepFileCopies) private var keepFileCopies = true
     @AppStorage(Prefs.Key.maxFileCopyMB) private var maxFileCopyMB = Prefs.Default.maxFileCopyMB
@@ -113,20 +111,6 @@ private struct GeneralSettings: View {
                 Toggle("Always paste as plain text", isOn: $alwaysPlainText)
                 modifierPicker("Paste as plain text with", selection: $plainTextModifier, suffix: "↩ or click")
                 modifierPicker("Quick paste items 1–9 with", selection: $quickPasteModifier, suffix: "1 … 9")
-            }
-
-            Section("Preview") {
-                Toggle("Show preview when hovering an item", isOn: $previewOnHover)
-                if previewOnHover {
-                    LabeledContent("Delay") {
-                        HStack {
-                            Slider(value: $hoverDelay, in: 0...2, step: 0.1)
-                            Text(String(format: "%.1f s", hoverDelay)).monospacedDigit().frame(width: 44)
-                        }
-                    }
-                }
-                Text("Press Space (when search is empty) or ⌘Y to preview the selected item.")
-                    .font(.caption).foregroundStyle(.secondary)
             }
 
             Section("Updates") {

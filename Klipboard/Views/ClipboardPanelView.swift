@@ -2,9 +2,9 @@ import AppKit
 import SwiftUI
 
 enum PanelLayout {
-    static let defaultWidth: CGFloat = 560
-    static let defaultHeight: CGFloat = 420
-    static let minWidth: CGFloat = 460
+    static let defaultWidth: CGFloat = 860
+    static let defaultHeight: CGFloat = 460
+    static let minWidth: CGFloat = 600
     static let minHeight: CGFloat = 300
     static let minListWidth: CGFloat = 300
     static let minPreviewWidth: CGFloat = 240
@@ -17,20 +17,13 @@ enum PanelLayout {
     /// Returns the portion of totalWidth allocated to the list when preview is open.
     static func listWidth(for totalWidth: CGFloat) -> CGFloat {
         let preview = previewWidth(for: totalWidth)
-        return max(minListWidth, totalWidth - preview)
+        return totalWidth - preview
     }
 
     /// Returns the portion of totalWidth allocated to the preview when preview is open.
     static func previewWidth(for totalWidth: CGFloat) -> CGFloat {
         let desired = round(totalWidth * 0.375)
         return min(max(minPreviewWidth, desired), totalWidth - minListWidth)
-    }
-
-    /// Total width for preview toggle: expands when previewing opens, restores base width when closed.
-    static func width(baseWidth: CGFloat = defaultWidth, previewing: Bool) -> CGFloat {
-        if !previewing { return baseWidth }
-        let preview = max(minPreviewWidth, round(baseWidth * 0.6))
-        return baseWidth + preview
     }
 }
 
@@ -40,14 +33,11 @@ struct ClipboardPanelView: View {
     @FocusState private var isSearchFocused: Bool
     @AppStorage(Prefs.Key.quickPasteModifier) private var quickPasteModifier = ModifierChoice.command.rawValue
     @AppStorage(Prefs.Key.plainTextModifier) private var plainTextModifier = ModifierChoice.shift.rawValue
-    @State private var hoverTask: Task<Void, Never>?
 
     var body: some View {
         GeometryReader { geometry in
             let totalWidth = geometry.size.width
-            let listWidth = viewModel.isPreviewing
-                ? PanelLayout.listWidth(for: totalWidth)
-                : totalWidth
+            let listWidth = PanelLayout.listWidth(for: totalWidth)
             let previewWidth = max(0, totalWidth - listWidth)
 
             HStack(spacing: 0) {
@@ -70,10 +60,8 @@ struct ClipboardPanelView: View {
                 }
                 .frame(width: listWidth)
 
-                if viewModel.isPreviewing {
-                    PreviewPane(entry: viewModel.selectedEntry)
-                        .frame(width: previewWidth)
-                }
+                PreviewPane(entry: viewModel.selectedEntry)
+                    .frame(width: previewWidth)
             }
         }
         .frame(maxWidth: .infinity, maxHeight: .infinity)
@@ -158,7 +146,7 @@ struct ClipboardPanelView: View {
     private var emptyMessage: String {
         if !viewModel.searchText.isEmpty { return "No matches" }
         switch viewModel.filter {
-        case .all: return Prefs.isPaused ? "Recording is paused" : "No clipboard history yet"
+        case .all: return Prefs.isPaused ? "Klipboard is paused" : "No clipboard history yet"
         case .snippets: return "No snippets yet.\nAdd them in Settings → Snippets, or right-click an item → Save as Snippet."
         default: return "No \(viewModel.filter.title.lowercased()) yet"
         }
@@ -185,12 +173,6 @@ struct ClipboardPanelView: View {
         case .snippet:
             EmptyView()
         }
-        Button("Preview") {
-            if let index = viewModel.entries.firstIndex(where: { $0.id == entry.id }) {
-                viewModel.selectedIndex = index
-            }
-            viewModel.isPreviewing = true
-        }
         Divider()
         Button("Delete", role: .destructive) { viewModel.delete(entry) }
     }
@@ -201,15 +183,14 @@ struct ClipboardPanelView: View {
         viewModel.paste(entry, plainText: plain, dismiss: dismiss)
     }
 
+    private static var lastHoverLocation: CGPoint?
+
+    /// Only a real mouse move selects: rows scrolling under a still cursor must not steal keyboard selection.
     private func hover(index: Int, hovering: Bool) {
-        hoverTask?.cancel()
-        guard hovering, Prefs.previewOnHover else { return }
-        hoverTask = Task { @MainActor in
-            try? await Task.sleep(for: .seconds(Prefs.hoverDelay))
-            guard !Task.isCancelled else { return }
-            viewModel.selectedIndex = index
-            viewModel.isPreviewing = true
-        }
+        let location = NSEvent.mouseLocation
+        guard hovering, location != Self.lastHoverLocation else { return }
+        Self.lastHoverLocation = location
+        viewModel.selectedIndex = index
     }
 
     private func deleteSelected() {
@@ -318,14 +299,15 @@ struct FilterBar: View {
                 } label: {
                     Text(filter.title)
                         .font(.system(size: 11, weight: .medium))
-                        .padding(.horizontal, 9)
+                        .lineLimit(1)
+                        .frame(maxWidth: .infinity)
                         .padding(.vertical, 4)
                         .background(Capsule().fill(isOn ? Color.accentColor : Color.primary.opacity(0.07)))
                         .foregroundStyle(isOn ? Color.white : Color.primary)
+                        .contentShape(Capsule())
                 }
                 .buttonStyle(.plain)
             }
-            Spacer()
         }
         .padding(.horizontal, 12)
         .padding(.bottom, 8)

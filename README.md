@@ -14,7 +14,7 @@
 - **Filter by type** with chips under the search box: All · Text · Links · Images · Files · Colors · Snippets (`⌘←` / `⌘→` to switch).
 - **Quick paste** the first nine items with **`⌘1`-`⌘9`** (modifier can be changed).
 - **Paste as plain text** with **`⇧↩`** or **`⇧`-click** to drop fonts and colors, or turn on *Always paste as plain text*.
-- **Preview** the full item with **`Space`** (when search is empty) or **`⌘Y`**: full text, full-size images, Quick Look for files, notes, and hex/RGB for colors. Optional preview on hover.
+- **Instant preview** side by side: full text, full-size images, Quick Look for files, notes, and hex/RGB for colors. Updates immediately as you select or hover items.
 - **Resizable panel**: Drag any edge to resize the panel. Klipboard remembers your preferred size across launches.
 
 ### What it remembers
@@ -30,7 +30,7 @@
 Turn on **Paste Stack** from the menu bar, copy several things, then press **`⌃⌥V`** to paste them one after another in the order you copied them. The menu-bar icon shows how many are left.
 
 ### Privacy and control
-- **Pause recording** from the menu bar or a shortcut; anything copied while paused is never saved.
+- **Pause Klipboard** from the menu bar or a shortcut; anything copied while paused is never saved.
 - **Ignore apps** you choose, and skip passwords from 1Password, Bitwarden, Keychain and other password managers ([nspasteboard.org](http://nspasteboard.org) markers).
 - **History size** (any number or unlimited) and **auto-delete** after 1, 7, 30 or a custom number of days.
 - **Backup & restore**: Export your history, snippets and saved files to a `.klipboard` archive or import one in **Settings → General → Backup**.
@@ -41,12 +41,12 @@ Turn on **Paste Stack** from the menu bar, copy several things, then press **`�
 Starts at login, stays out of the Dock, updates automatically in the background, and keeps your history across restarts. Uses about 40 MB of memory and close to 0% CPU while idle.
 
 ### Nothing hardcoded
-Every limit and shortcut is in **Settings** (menu-bar icon → **Settings…** or `⌘,`):
+Every limit and shortcut is in **Settings** (menu-bar icon → **Settings** or `⌘,`):
 
 | Tab | Settings |
 | :--- | :--- |
-| **General** | History size, auto-delete, save screenshots, keep copies of copied files (size limit), always paste plain text, plain-text and quick-paste modifier keys, preview on hover and delay, automatic updates, backup export/import (.klipboard), permissions setup |
-| **Shortcuts** | Open Klipboard, Paste Next from Stack, Start/Stop Paste Stack, Pause/Resume Recording. Record any key combination |
+| **General** | History size, auto-delete, save screenshots, keep copies of copied files (size limit), always paste plain text, plain-text and quick-paste modifier keys, automatic updates, backup export/import (.klipboard), permissions setup |
+| **Shortcuts** | Open Klipboard, Paste Next from Stack, Start/Stop Paste Stack, Pause/Resume Klipboard. Record any key combination |
 | **Privacy** | Password-manager skipping, ignored apps, longest text, largest image, largest item, how often the clipboard is checked |
 | **Snippets** | Add, edit and delete snippets |
 
@@ -109,7 +109,7 @@ A free Apple ID is enough: Xcode → Settings → Accounts → Manage Certificat
 
 Klipboard needs **Accessibility** permission (shown as **Device Control and Data Access** on newer macOS) to paste directly into the active app. Without it, clicking an item still copies it; just press `⌘V` yourself.
 
-On first launch, Klipboard presents a welcome window that asks for Accessibility permission and lets you enable launch at login. The permission status is detected live without restarting the app. If permission is ever missing when you paste, the window reappears. You can also open it anytime from the menu bar under **Permissions…** or in **Settings → General → Permissions**.
+On first launch, Klipboard presents a welcome window that asks for Accessibility permission and lets you enable launch at login. The permission status is detected live without restarting the app. If permission is ever missing when you paste, the window reappears. You can also open it anytime from the menu bar under **Permissions** or in **Settings → General → Permissions**.
 
 To grant manually:
 1. Turn on **Klipboard** in **System Settings → Privacy & Security → Accessibility** (or **Device Control and Data Access**).
@@ -127,11 +127,11 @@ tccutil reset All com.abhishek.Klipboard
 | :--- | :--- |
 | **Open Clipboard History** | Show the panel |
 | **Start / Stop Paste Stack** | Collect copies to paste in order; **Paste Next** appears while it's on |
-| **Pause / Resume Recording** | Stop saving copies for a while (the icon changes to ⏸) |
-| **Clear History…** | Delete history, optionally keeping pinned and favorite items |
-| **Check for Updates…** | Check for newer releases via Sparkle |
-| **Settings…** | All options (`⌘,`) |
-| **Permissions…** | Reopen the welcome and accessibility permission window |
+| **Pause / Resume Klipboard** | Stop saving copies for a while (the icon changes to ⏸) |
+| **Clear History** | Delete history, optionally keeping pinned and favorite items |
+| **Check for Updates** | Check for newer releases via Sparkle |
+| **Settings** | All options (`⌘,`) |
+| **Permissions** | Reopen the welcome and accessibility permission window |
 | **Launch at Login** | Start Klipboard automatically when you log in (on by default) |
 | **Quit Klipboard** | Stop Klipboard until you open it again or next login |
 
@@ -148,10 +148,9 @@ Global shortcuts can be changed in **Settings → Shortcuts**; the modifiers for
 | **`⇧↩`** or **`⇧`-click** | Paste as plain text |
 | **`⌘1`-`⌘9`** | Paste item 1-9 |
 | **`⌘←` / `⌘→`** | Previous / next filter |
-| **`Space`** (empty search) or **`⌘Y`** | Show / hide preview |
 | **`⌘⌫`** | Delete the selected item |
-| **`Esc`** | Close the preview, then the panel |
-| Right-click | Paste as plain text, pin, favorite, rename, edit note, save as snippet, reveal in Finder, preview, delete |
+| **`Esc`** | Close the panel |
+| Right-click | Paste as plain text, pin, favorite, rename, edit note, save as snippet, reveal in Finder, delete |
 
 ## Automated Hosting & Releases
 

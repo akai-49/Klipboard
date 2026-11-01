@@ -48,7 +48,6 @@ final class ClipboardViewModel: ObservableObject {
     }
     @Published private(set) var entries: [PanelEntry] = []
     @Published var selectedIndex: Int = 0
-    @Published var isPreviewing = false
     @Published private(set) var pasteStack = PasteStack()
 
     /// Re-activates the app that was frontmost before the panel opened and returns it.

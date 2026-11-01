@@ -15,8 +15,6 @@ enum Prefs {
         static let alwaysPlainText = "alwaysPlainText"
         static let plainTextModifier = "plainTextModifier"
         static let quickPasteModifier = "quickPasteModifier"
-        static let previewOnHover = "previewOnHover"
-        static let hoverDelay = "hoverDelay"
         static let isPaused = "isPaused"
         static let saveScreenshots = "saveScreenshots"
         static let keepFileCopies = "keepFileCopies"
@@ -34,10 +32,9 @@ enum Prefs {
         static let maxTextLength = 100_000
         static let maxImageDimension = 1920
         static let maxItemMB = 15
-        static let hoverDelay = 0.6
         static let maxFileCopyMB = 100
-        static let panelWidth: Double = 560
-        static let panelHeight: Double = 420
+        static let panelWidth: Double = 860
+        static let panelHeight: Double = 460
     }
 
     private static var defaults: UserDefaults { .standard }
@@ -56,8 +53,6 @@ enum Prefs {
             Key.alwaysPlainText: false,
             Key.plainTextModifier: ModifierChoice.shift.rawValue,
             Key.quickPasteModifier: ModifierChoice.command.rawValue,
-            Key.previewOnHover: false,
-            Key.hoverDelay: Default.hoverDelay,
             Key.isPaused: false,
             Key.saveScreenshots: true,
             Key.keepFileCopies: true,
@@ -95,19 +90,17 @@ enum Prefs {
     static var keepFileCopies: Bool { defaults.bool(forKey: Key.keepFileCopies) }
     static var maxFileCopyBytes: Int { max(0, defaults.integer(forKey: Key.maxFileCopyMB)) * 1024 * 1024 }
     static var saveScreenshots: Bool { defaults.bool(forKey: Key.saveScreenshots) }
-    static var previewOnHover: Bool { defaults.bool(forKey: Key.previewOnHover) }
-    static var hoverDelay: TimeInterval { max(0, defaults.double(forKey: Key.hoverDelay)) }
     static var panelWidth: CGFloat {
         get {
             let val = defaults.double(forKey: Key.panelWidth)
-            return val > 0 ? CGFloat(val) : CGFloat(Default.panelWidth)
+            return val >= Double(PanelLayout.minWidth) ? CGFloat(val) : CGFloat(Default.panelWidth)
         }
         set { defaults.set(Double(newValue), forKey: Key.panelWidth) }
     }
     static var panelHeight: CGFloat {
         get {
             let val = defaults.double(forKey: Key.panelHeight)
-            return val > 0 ? CGFloat(val) : CGFloat(Default.panelHeight)
+            return val >= Double(PanelLayout.minHeight) ? CGFloat(val) : CGFloat(Default.panelHeight)
         }
         set { defaults.set(Double(newValue), forKey: Key.panelHeight) }
     }
@@ -163,7 +156,7 @@ enum HotkeyAction: String, CaseIterable, Identifiable {
         case .openPanel: return "Open Klipboard"
         case .pasteNext: return "Paste Next from Stack"
         case .togglePasteStack: return "Start / Stop Paste Stack"
-        case .togglePause: return "Pause / Resume Recording"
+        case .togglePause: return "Pause / Resume Klipboard"
         }
     }
 

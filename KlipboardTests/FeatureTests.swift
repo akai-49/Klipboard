@@ -480,10 +480,18 @@ final class FeatureTests: XCTestCase {
             Prefs.panelHeight = origH
         }
 
+        // Falls back to default when saved width is below minWidth (e.g. legacy list-only width 560)
+        UserDefaults.standard.set(560.0, forKey: Prefs.Key.panelWidth)
+        XCTAssertEqual(Prefs.panelWidth, CGFloat(Prefs.Default.panelWidth))
+
         Prefs.panelWidth = 750
         Prefs.panelHeight = 520
         XCTAssertEqual(Prefs.panelWidth, 750)
         XCTAssertEqual(Prefs.panelHeight, 520)
+    }
+
+    func testPauseActionTitle() {
+        XCTAssertEqual(HotkeyAction.togglePause.title, "Pause / Resume Klipboard")
     }
 
     // MARK: Polish: Security & Stability Regression Tests

@@ -59,15 +59,6 @@ final class AppCoordinator: NSObject, ObservableObject, NSWindowDelegate {
             .sink { [weak self] _ in self?.refreshStatusItem() }
             .store(in: &cancellables)
 
-        viewModel.$isPreviewing
-            .removeDuplicates()
-            .sink { [weak self] previewing in
-                let base = Prefs.panelWidth
-                let targetWidth = PanelLayout.width(baseWidth: base, previewing: previewing)
-                self?.panel?.setContentWidth(targetWidth, isPreviewing: previewing)
-            }
-            .store(in: &cancellables)
-
         // First run: enable launch-at-login and show the welcome window once. Later launches
         // (e.g. at login) stay silent in the menu bar unless accessibility is missing.
         let defaults = UserDefaults.standard
@@ -165,27 +156,27 @@ final class AppCoordinator: NSObject, ObservableObject, NSWindowDelegate {
         }
 
         menu.addItem(item(
-            Prefs.isPaused ? "Resume Recording" : "Pause Recording",
+            Prefs.isPaused ? "Resume Klipboard" : "Pause Klipboard",
             #selector(handleTogglePause),
             action: .togglePause
         ))
-        menu.addItem(item("Clear History…", #selector(handleClearHistory)))
+        menu.addItem(item("Clear History", #selector(handleClearHistory)))
         menu.addItem(.separator())
 
         let updateItem = NSMenuItem(
-            title: "Check for Updates…",
+            title: "Check for Updates",
             action: #selector(SPUStandardUpdaterController.checkForUpdates(_:)),
             keyEquivalent: ""
         )
         updateItem.target = updaterController
         menu.addItem(updateItem)
 
-        let settings = item("Settings…", #selector(handleOpenSettings))
+        let settings = item("Settings", #selector(handleOpenSettings))
         settings.keyEquivalent = ","
         settings.keyEquivalentModifierMask = [.command]
         menu.addItem(settings)
 
-        menu.addItem(item("Permissions…", #selector(handleOpenPermissions)))
+        menu.addItem(item("Permissions", #selector(handleOpenPermissions)))
 
         let loginItem = item("Launch at Login", #selector(handleToggleLaunchAtLogin))
         loginItem.state = LaunchAtLogin.isEnabled ? .on : .off
@@ -347,14 +338,12 @@ final class AppCoordinator: NSObject, ObservableObject, NSWindowDelegate {
             }))
             installPanelKeyMonitor()
         }
-        viewModel.isPreviewing = false
         viewModel.selectedIndex = 0
-        panel?.setContentWidth(Prefs.panelWidth, isPreviewing: false)
         panel?.showCentered()
     }
 
     /// Keys the search field would otherwise swallow: Return (± plain-text modifier),
-    /// quick paste digits, ⌘←/⌘→ for filters, Space/⌘Y for preview.
+    /// quick paste digits, ⌘←/⌘→ for filters.
     private func installPanelKeyMonitor() {
         panelKeyMonitor = NSEvent.addLocalMonitorForEvents(matching: .keyDown) { [weak self] event in
             guard let self, let panel = self.panel, event.window === panel else { return event }
@@ -369,9 +358,6 @@ final class AppCoordinator: NSObject, ObservableObject, NSWindowDelegate {
         let dismiss: () -> Void = { [weak self] in self?.panel?.dismiss() }
 
         switch Int(event.keyCode) {
-        case kVK_Escape where viewModel.isPreviewing:
-            viewModel.isPreviewing = false
-            return true
         case kVK_Return, kVK_ANSI_KeypadEnter:
             guard let entry = viewModel.selectedEntry else { return true }
             viewModel.paste(entry, plainText: flags.contains(Prefs.plainTextModifier.flag), dismiss: dismiss)
@@ -381,10 +367,6 @@ final class AppCoordinator: NSObject, ObservableObject, NSWindowDelegate {
             let index = all.firstIndex(of: viewModel.filter) ?? 0
             let step = event.keyCode == UInt16(kVK_LeftArrow) ? -1 : 1
             viewModel.filter = all[(index + step + all.count) % all.count]
-            return true
-        case kVK_Space where flags.isEmpty && viewModel.searchText.isEmpty,
-             kVK_ANSI_Y where flags == .command:
-            viewModel.isPreviewing.toggle()
             return true
         default:
             break

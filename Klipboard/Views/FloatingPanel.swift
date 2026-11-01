@@ -5,9 +5,6 @@ import SwiftUI
 /// focus from other apps until shown, closes on Esc/resign, user-resizable.
 final class FloatingPanel: NSPanel, NSWindowDelegate {
     private var isShowing = false
-    private var isProgrammaticResize = false
-    private var preExpandOriginX: CGFloat?
-    var isPreviewingActive = false
 
     init(content: some View) {
         let initialWidth = max(PanelLayout.minWidth, Prefs.panelWidth)
@@ -93,34 +90,6 @@ final class FloatingPanel: NSPanel, NSWindowDelegate {
         }
     }
 
-    /// Grows or shrinks to the right, keeping the list under the mouse, and stays on screen.
-    func setContentWidth(_ width: CGFloat, isPreviewing: Bool? = nil) {
-        if let isPreviewing {
-            if isPreviewing && !self.isPreviewingActive {
-                preExpandOriginX = frame.origin.x
-            }
-            self.isPreviewingActive = isPreviewing
-        }
-        isProgrammaticResize = true
-        defer { isProgrammaticResize = false }
-
-        var newFrame = frameRect(forContentRect: NSRect(origin: .zero, size: NSSize(width: width, height: contentLayoutRect.height)))
-        guard newFrame.width != frame.width else {
-            keepOnScreen()
-            return
-        }
-        newFrame.origin = frame.origin
-
-        if !self.isPreviewingActive, let preX = preExpandOriginX {
-            newFrame.origin.x = preX
-            preExpandOriginX = nil
-        } else if let visible = screen?.visibleFrame, newFrame.maxX > visible.maxX {
-            newFrame.origin.x = max(visible.minX, visible.maxX - newFrame.width)
-        }
-        setFrame(newFrame, display: true)
-        keepOnScreen()
-    }
-
     /// Keeps the panel within the visible bounds of the current screen.
     func keepOnScreen() {
         guard let screen = self.screen ?? NSScreen.main else { return }
@@ -153,14 +122,9 @@ final class FloatingPanel: NSPanel, NSWindowDelegate {
     }
 
     func windowDidResize(_ notification: Notification) {
-        guard !isShowing, !isProgrammaticResize else { return }
+        guard !isShowing else { return }
         let contentSize = contentLayoutRect.size
-
-        if isPreviewingActive {
-            Prefs.panelWidth = PanelLayout.listWidth(for: contentSize.width)
-        } else {
-            Prefs.panelWidth = contentSize.width
-        }
+        Prefs.panelWidth = contentSize.width
         Prefs.panelHeight = contentSize.height
     }
 

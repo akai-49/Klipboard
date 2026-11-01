@@ -61,6 +61,7 @@
       -webkit-font-smoothing: antialiased;
       -moz-osx-font-smoothing: grayscale;
       text-rendering: optimizeLegibility;
+      overflow-x: hidden;
     }
 
     body {
@@ -69,23 +70,24 @@
       font-family: var(--font-sans);
       font-size: 15.5px;
       line-height: 1.6;
+      overflow-x: hidden;
     }
 
-    .container {
-      max-width: 660px;
-      margin: 0 auto;
-      padding: 44px 24px 88px;
-    }
-
-    /* Header */
+    /* Full-width Header */
     .site-header {
+      width: 100%;
+      border-bottom: 1px solid var(--border);
+      background-color: var(--bg);
+    }
+
+    .header-inner {
+      max-width: 1200px;
+      margin: 0 auto;
+      padding: 18px 32px;
       display: flex;
       align-items: center;
       justify-content: space-between;
       gap: 16px;
-      padding-bottom: 28px;
-      margin-bottom: 20px;
-      border-bottom: 1px solid var(--border);
     }
 
     .brand {
@@ -119,7 +121,7 @@
     .nav-links {
       display: flex;
       align-items: center;
-      gap: 16px;
+      gap: 20px;
       font-size: 13.5px;
     }
 
@@ -137,21 +139,29 @@
       font-weight: 500;
       color: var(--text) !important;
       border: 1px solid var(--border-strong);
-      padding: 3px 9px;
+      padding: 4px 11px;
       border-radius: 5px;
       background: var(--surface);
+      transition: border-color 0.15s ease;
     }
 
     .nav-download:hover {
       border-color: var(--accent);
     }
 
+    /* Main Container */
+    .container {
+      max-width: 1200px;
+      margin: 0 auto;
+      padding: 44px 32px 88px;
+    }
+
     /* Headings */
     h1 {
       font-family: var(--font-serif);
-      font-size: clamp(2rem, 5vw, 2.6rem);
+      font-size: clamp(2.2rem, 3.8vw, 3.2rem);
       font-weight: 500;
-      line-height: 1.18;
+      line-height: 1.16;
       letter-spacing: -0.015em;
       color: var(--text);
       margin-bottom: 14px;
@@ -159,7 +169,7 @@
 
     h2 {
       font-family: var(--font-serif);
-      font-size: 1.6rem;
+      font-size: 1.7rem;
       font-weight: 500;
       line-height: 1.25;
       color: var(--text);
@@ -183,7 +193,7 @@
     }
 
     p.lead {
-      font-size: 16.5px;
+      font-size: 17px;
       line-height: 1.55;
       color: var(--text);
       margin-bottom: 20px;
@@ -230,13 +240,31 @@
       white-space: nowrap;
     }
 
-    /* Actions and terminal rows */
+    /* Hero section */
+    .hero {
+      display: block;
+      margin-bottom: 16px;
+    }
+
+    .hero-content {
+      min-width: 0;
+    }
+
+    .hero-media {
+      min-width: 0;
+    }
+
     .hero-actions {
       display: flex;
       align-items: center;
       gap: 12px;
       flex-wrap: wrap;
       margin: 20px 0 12px;
+    }
+
+    .hero-secondary-text {
+      font-size: 13.5px;
+      color: var(--text-muted);
     }
 
     .btn-download {
@@ -277,13 +305,15 @@
     .terminal-row code {
       font-family: var(--font-mono);
       font-size: 12.5px;
+      line-height: 1.45;
       color: var(--text);
-      white-space: nowrap;
-      overflow-x: auto;
+      white-space: pre-wrap;
+      word-break: normal;
+      overflow-wrap: anywhere;
       display: block;
       min-width: 0;
       flex: 1 1 auto;
-      scrollbar-width: thin;
+      padding: 2px 0;
     }
 
     .copy-btn {
@@ -297,6 +327,7 @@
       padding: 3px 8px;
       cursor: pointer;
       flex-shrink: 0;
+      align-self: center;
       transition: color 0.15s, border-color 0.15s;
     }
 
@@ -309,12 +340,11 @@
       font-size: 13px;
       color: var(--text-muted);
       margin-top: 6px;
-      margin-bottom: 24px;
+      margin-bottom: 20px;
     }
 
-    /* Screenshots */
     figure.shot {
-      margin: 28px 0 34px;
+      margin: 24px 0 32px;
     }
 
     figure.shot img {
@@ -326,9 +356,15 @@
       box-shadow: 0 4px 18px rgba(0, 0, 0, 0.05);
     }
 
+    @media (prefers-color-scheme: dark) {
+      figure.shot img {
+        box-shadow: 0 4px 22px rgba(0, 0, 0, 0.35);
+      }
+    }
+
     figure.shot-small {
-      max-width: 420px;
-      margin: 22px 0 26px;
+      max-width: 440px;
+      margin: 18px 0 24px;
     }
 
     figcaption {
@@ -338,14 +374,96 @@
       line-height: 1.45;
     }
 
-    /* Shortcuts Table */
-    .table-wrap {
-      width: 100%;
-      overflow-x: auto;
-      margin: 16px 0 24px;
-      -webkit-overflow-scrolling: touch;
+    @media (min-width: 1000px) {
+      .hero {
+        display: grid;
+        grid-template-columns: minmax(0, 1fr) minmax(0, 1.2fr);
+        gap: 48px;
+        align-items: center;
+        padding: 16px 0 20px;
+      }
+
+      .hero .shot {
+        margin: 0;
+      }
+
+      .meta-note {
+        margin-bottom: 0;
+      }
     }
 
+    /* Features Grid */
+    .features-grid {
+      display: grid;
+      grid-template-columns: 1fr;
+      gap: 24px;
+      margin-top: 20px;
+    }
+
+    @media (min-width: 900px) {
+      .features-grid {
+        grid-template-columns: repeat(3, minmax(0, 1fr));
+        gap: 36px;
+      }
+    }
+
+    .feature-col h3 {
+      margin-top: 0;
+      margin-bottom: 10px;
+      font-size: 15.5px;
+    }
+
+    .feature-col ul {
+      margin-top: 6px;
+    }
+
+    /* Settings section */
+    .settings-block {
+      margin-top: 40px;
+      padding-top: 28px;
+      border-top: 1px solid var(--border);
+    }
+
+    .settings-block h3 {
+      margin-top: 0;
+    }
+
+    .settings-grid {
+      display: grid;
+      grid-template-columns: 1fr;
+      gap: 28px;
+      align-items: start;
+      margin-top: 16px;
+    }
+
+    @media (min-width: 960px) {
+      .settings-grid {
+        grid-template-columns: minmax(0, 1.45fr) minmax(0, 1fr);
+        gap: 40px;
+      }
+    }
+
+    .settings-shot-col figure.shot-small {
+      margin: 0;
+      max-width: 100%;
+    }
+
+    /* Shortcuts Grid (2 columns on wide screens) */
+    .shortcuts-grid {
+      display: grid;
+      grid-template-columns: 1fr;
+      gap: 24px;
+      margin-top: 16px;
+    }
+
+    @media (min-width: 900px) {
+      .shortcuts-grid {
+        grid-template-columns: 1fr 1fr;
+        gap: 40px;
+      }
+    }
+
+    /* Tables */
     table.shortcut-table {
       width: 100%;
       border-collapse: collapse;
@@ -382,13 +500,12 @@
       border-bottom: 1px solid var(--border-strong);
     }
 
-    /* Settings Table */
     table.settings-table {
       width: 100%;
       border-collapse: collapse;
       font-size: 13.5px;
       line-height: 1.5;
-      margin: 14px 0 22px;
+      margin: 4px 0 16px;
     }
 
     table.settings-table th {
@@ -421,6 +538,37 @@
       border-bottom: 1px solid var(--border-strong);
     }
 
+    /* Install Grid */
+    .install-grid {
+      display: grid;
+      grid-template-columns: 1fr;
+      gap: 24px;
+      margin: 16px 0;
+    }
+
+    @media (min-width: 900px) {
+      .install-grid {
+        grid-template-columns: 1fr 1fr;
+        gap: 36px;
+      }
+    }
+
+    .install-card {
+      min-width: 0;
+    }
+
+    .install-card h3 {
+      margin-top: 0;
+    }
+
+    .install-direct-section {
+      margin: 24px 0;
+    }
+
+    .install-direct-section h3 {
+      margin-top: 0;
+    }
+
     /* Note box */
     .note-box {
       background: var(--surface-subtle);
@@ -451,11 +599,32 @@
       margin-bottom: 4px;
     }
 
-    /* Footer */
-    footer {
-      margin-top: 56px;
-      padding-top: 24px;
+    /* Requirements Grid */
+    .requirements-grid {
+      display: grid;
+      grid-template-columns: 1fr;
+      gap: 8px 32px;
+      padding-left: 20px;
+    }
+
+    @media (min-width: 900px) {
+      .requirements-grid {
+        grid-template-columns: 1fr 1fr;
+      }
+    }
+
+    /* Full-width Footer */
+    .site-footer {
+      width: 100%;
       border-top: 1px solid var(--border);
+      margin-top: 56px;
+      background-color: var(--bg);
+    }
+
+    .footer-inner {
+      max-width: 1200px;
+      margin: 0 auto;
+      padding: 28px 32px;
       font-size: 13px;
       color: var(--text-muted);
       display: flex;
@@ -465,27 +634,29 @@
       gap: 12px;
     }
 
-    footer a {
+    .footer-inner a {
       color: var(--text-secondary);
     }
 
-    footer a:hover {
+    .footer-inner a:hover {
       color: var(--text);
     }
 
-    @media (max-width: 600px) {
+    /* Mobile adjustments (<= 700px) */
+    @media (max-width: 700px) {
       .container {
         padding: 24px 16px 64px;
       }
-      .site-header {
-        padding-bottom: 18px;
-        margin-bottom: 16px;
+      .header-inner {
+        padding: 14px 16px;
       }
-      .nav-links {
-        gap: 12px;
+      .footer-inner {
+        padding: 20px 16px;
       }
-      .nav-links a:not(.nav-download):nth-child(1),
-      .nav-links a:not(.nav-download):nth-child(2) {
+      .brand-version {
+        display: none;
+      }
+      .nav-links a:not(.nav-download) {
         display: none;
       }
       table.shortcut-table td.col-key {
@@ -495,37 +666,22 @@
         padding: 8px 12px;
         gap: 10px;
       }
-      .terminal-row code {
-        white-space: pre-wrap;
-        word-break: normal;
-        overflow-wrap: anywhere;
-        line-height: 1.5;
-      }
-      .copy-btn {
-        flex-shrink: 0;
-      }
     }
 
-    @media (max-width: 520px) {
-      .brand {
-        flex-shrink: 0;
-      }
-      .brand-version {
-        display: none;
-      }
-      .nav-links a:not(.nav-download) {
-        display: none;
-      }
-      .nav-download {
-        flex-shrink: 0;
-        white-space: nowrap;
+    @media (max-width: 500px) {
+      .header-inner,
+      .container,
+      .footer-inner {
+        max-width: 390px;
+        margin-left: 0;
+        margin-right: auto;
       }
     }
   </style>
 </head>
 <body>
-  <div class="container">
-    <header class="site-header">
+  <header class="site-header">
+    <div class="header-inner">
       <a href="#" class="brand">
         <img src="icon.png" width="30" height="30" alt="Klipboard icon" />
         <span class="brand-title">Klipboard</span>
@@ -538,113 +694,135 @@
         <a href="https://github.com/akai-49/Klipboard">GitHub</a>
         <a href="Klipboard.dmg" class="nav-download" download>Download</a>
       </nav>
-    </header>
+    </div>
+  </header>
 
+  <div class="container">
     <main>
-      <section class="intro">
-        <h1>A clipboard history panel for Mac.</h1>
-        <p class="lead">
-          Klipboard lives in your menu bar and remembers what you copy, so you can search through your clips and paste them back anywhere with <kbd>⌥V</kbd>.
-        </p>
+      <section class="hero">
+        <div class="hero-content">
+          <h1>A clipboard history panel for Mac.</h1>
+          <p class="lead">
+            Klipboard lives in your menu bar and remembers what you copy, so you can search through your clips and paste them back anywhere with <kbd>⌥V</kbd>.
+          </p>
 
-        <div class="hero-actions">
-          <a href="Klipboard.dmg" class="btn-download" download>Download Klipboard.dmg</a>
-          <span style="font-size: 13.5px; color: var(--text-muted);">or install via Homebrew</span>
+          <div class="hero-actions">
+            <a href="Klipboard.dmg" class="btn-download" download>Download Klipboard.dmg</a>
+            <span class="hero-secondary-text">or install via Homebrew</span>
+          </div>
+
+          <div class="terminal-row">
+            <code>brew trust akai-49/klipboard &amp;&amp; brew install --cask akai-49/klipboard/klipboard</code>
+            <button type="button" class="copy-btn" data-copy="brew trust akai-49/klipboard &amp;&amp; brew install --cask akai-49/klipboard/klipboard">Copy</button>
+          </div>
+
+          <p class="meta-note">Free and open source. Requires macOS 14 Sonoma or later on Apple Silicon or Intel Macs.</p>
         </div>
 
-        <div class="terminal-row">
-          <code>brew trust akai-49/klipboard &amp;&amp; brew install --cask akai-49/klipboard/klipboard</code>
-          <button type="button" class="copy-btn" data-copy="brew trust akai-49/klipboard &amp;&amp; brew install --cask akai-49/klipboard/klipboard">Copy</button>
+        <div class="hero-media">
+          <figure class="shot">
+            <img src="screenshot-panel.png" width="1892" height="884" alt="Klipboard panel showing clipboard history" />
+            <figcaption>Press Option-V anywhere to open the panel and paste directly into the active app.</figcaption>
+          </figure>
         </div>
-
-        <p class="meta-note">Free and open source. Requires macOS 14 Sonoma or later on Apple Silicon or Intel Macs.</p>
       </section>
-
-      <figure class="shot">
-        <img src="screenshot-panel.png" width="1892" height="884" alt="Klipboard panel showing clipboard history" />
-        <figcaption>Press Option-V anywhere to open the panel and paste directly into the active app.</figcaption>
-      </figure>
 
       <section id="features">
         <h2>Features</h2>
 
-        <h3>Find and paste</h3>
-        <ul>
-          <li><strong>Open from anywhere</strong>: Press <kbd>⌥V</kbd> (or your custom shortcut). Klipboard pastes the chosen item straight into whatever app you were using.</li>
-          <li><strong>Search as you type</strong>: Filter through text contents, file names, custom labels, notes, and the application you copied from.</li>
-          <li><strong>Type filters</strong>: Switch between All, Text, Links, Images, Files, Colors, and Snippets using the filter chips or with <kbd>⌘←</kbd> and <kbd>⌘→</kbd>.</li>
-          <li><strong>Quick paste</strong>: Press <kbd>⌘1</kbd>-<kbd>⌘9</kbd> to paste one of the first nine items directly without navigating.</li>
-          <li><strong>Paste plain text</strong>: Hold Shift when pasting (<kbd>⇧↩</kbd> or <kbd>⇧</kbd>-click) to strip styling, or turn on plain text pasting by default in Settings.</li>
-          <li><strong>Full previews</strong>: Press <kbd>Space</kbd> (when search is clear) or <kbd>⌘Y</kbd> to inspect complete text, full images, Quick Look documents, hex and RGB color codes, and notes. Optional preview on hover.</li>
-          <li><strong>Resizable window</strong>: Drag any edge to resize the panel. Klipboard preserves your chosen window dimensions across launches.</li>
-        </ul>
+        <div class="features-grid">
+          <div class="feature-col">
+            <h3>Find and paste</h3>
+            <ul>
+              <li><strong>Open from anywhere</strong>: Press <kbd>⌥V</kbd> (or your custom shortcut). Klipboard pastes the chosen item straight into whatever app you were using.</li>
+              <li><strong>Search as you type</strong>: Filter through text contents, file names, custom labels, notes, and the application you copied from.</li>
+              <li><strong>Type filters</strong>: Switch between All, Text, Links, Images, Files, Colors, and Snippets using the filter chips or with <kbd>⌘←</kbd> and <kbd>⌘→</kbd>.</li>
+              <li><strong>Quick paste</strong>: Press <kbd>⌘1</kbd>-<kbd>⌘9</kbd> to paste one of the first nine items directly without navigating.</li>
+              <li><strong>Paste plain text</strong>: Hold Shift when pasting (<kbd>⇧↩</kbd> or <kbd>⇧</kbd>-click) to strip styling, or turn on plain text pasting by default in Settings.</li>
+              <li><strong>Instant previews</strong>: Side-by-side preview is always visible and updates immediately as you select or hover items. Inspect complete text, full images, Quick Look documents, hex and RGB color codes, and notes.</li>
+              <li><strong>Resizable window</strong>: Drag any edge to resize the panel. Klipboard preserves your chosen window dimensions across launches.</li>
+            </ul>
+          </div>
 
-        <h3>What it keeps</h3>
-        <ul>
-          <li><strong>All clip types</strong>: Remembers plain text, rich text, links, images, colors, and files. Multiple files copied together are kept as a single history item.</li>
-          <li><strong>Automatic screenshots</strong>: Screenshots saved to files (<kbd>⌘⇧3</kbd>, <kbd>⌘⇧4</kbd>, <kbd>⌘⇧5</kbd>) appear in your clipboard automatically, ready to paste. Can be turned off in Settings.</li>
-          <li><strong>Move to top on copy</strong>: Copying an item already in your history moves it back to the top instead of creating a duplicate.</li>
-          <li><strong>Copied files stay working</strong>: Klipboard keeps a local copy up to a size you specify, so files still paste even if the original file is moved or deleted. On APFS volumes, this takes no additional disk space.</li>
-          <li><strong>Rename and notes</strong>: Right-click any clip to rename it or add a personal note. Both are indexed in search and shown in previews.</li>
-          <li><strong>Snippets</strong>: Keep frequently used text on hand, like postal addresses or canned replies. Add them in Settings or right-click any clip to save it as a snippet.</li>
-          <li><strong>Pins and favorites</strong>: Pin or favorite clips so they are never removed by history limits or auto-cleanups.</li>
-          <li><strong>Paste stack</strong>: Turn on Paste Stack from the menu bar, copy several items in sequence, and press <kbd>⌃⌥V</kbd> to paste them in the order you copied them. The menu bar icon shows how many items remain.</li>
-        </ul>
+          <div class="feature-col">
+            <h3>What it keeps</h3>
+            <ul>
+              <li><strong>All clip types</strong>: Remembers plain text, rich text, links, images, colors, and files. Multiple files copied together are kept as a single history item.</li>
+              <li><strong>Automatic screenshots</strong>: Screenshots saved to files (<kbd>⌘⇧3</kbd>, <kbd>⌘⇧4</kbd>, <kbd>⌘⇧5</kbd>) appear in your clipboard automatically, ready to paste. Can be turned off in Settings.</li>
+              <li><strong>Move to top on copy</strong>: Copying an item already in your history moves it back to the top instead of creating a duplicate.</li>
+              <li><strong>Copied files stay working</strong>: Klipboard keeps a local copy up to a size you specify, so files still paste even if the original file is moved or deleted. On APFS volumes, this takes no additional disk space.</li>
+              <li><strong>Rename and notes</strong>: Right-click any clip to rename it or add a personal note. Both are indexed in search and shown in previews.</li>
+              <li><strong>Snippets</strong>: Keep frequently used text on hand, like postal addresses or canned replies. Add them in Settings or right-click any clip to save it as a snippet.</li>
+              <li><strong>Pins and favorites</strong>: Pin or favorite clips so they are never removed by history limits or auto-cleanups.</li>
+              <li><strong>Paste stack</strong>: Turn on Paste Stack from the menu bar, copy several items in sequence, and press <kbd>⌃⌥V</kbd> to paste them in the order you copied them. The menu bar icon shows how many items remain.</li>
+            </ul>
+          </div>
 
-        <h3>Privacy and control</h3>
-        <ul>
-          <li><strong>Password manager skipping</strong>: Automatically ignores passwords copied from 1Password, Bitwarden, Apple Keychain, and apps using standard nspasteboard.org markers.</li>
-          <li><strong>Pause recording</strong>: Pause tracking from the menu bar or a recorded shortcut. Anything copied while paused is never saved.</li>
-          <li><strong>Ignore apps</strong>: Exclude specific applications from ever saving clipboard items.</li>
-          <li><strong>History limits and auto-delete</strong>: Set any clip limit or keep it unlimited. Old items can be deleted automatically after 1, 7, 30, or a custom number of days.</li>
-          <li><strong>Clear history</strong>: Clear your history from the menu bar anytime, with an option to keep your pinned and favorite items intact.</li>
-          <li><strong>Backup and restore</strong>: Export history, snippets, and cached files into a single <kbd>.klipboard</kbd> archive, or import one from Settings.</li>
-          <li><strong>Offline by design</strong>: No network requests, accounts, or telemetry. All data stays locally on your Mac in <code>~/Library/Application Support/Klipboard/</code>.</li>
-        </ul>
+          <div class="feature-col">
+            <h3>Privacy and control</h3>
+            <ul>
+              <li><strong>Password manager skipping</strong>: Automatically ignores passwords copied from 1Password, Bitwarden, Apple Keychain, and apps using standard nspasteboard.org markers.</li>
+              <li><strong>Pause Klipboard</strong>: Pause tracking from the menu bar or a recorded shortcut. Anything copied while paused is never saved.</li>
+              <li><strong>Ignore apps</strong>: Exclude specific applications from ever saving clipboard items.</li>
+              <li><strong>History limits and auto-delete</strong>: Set any clip limit or keep it unlimited. Old items can be deleted automatically after 1, 7, 30, or a custom number of days.</li>
+              <li><strong>Clear history</strong>: Clear your history from the menu bar anytime, with an option to keep your pinned and favorite items intact.</li>
+              <li><strong>Backup and restore</strong>: Export history, snippets, and cached files into a single <kbd>.klipboard</kbd> archive, or import one from Settings.</li>
+              <li><strong>Offline by design</strong>: No network requests, accounts, or telemetry. All data stays locally on your Mac in <code>~/Library/Application Support/Klipboard/</code>.</li>
+            </ul>
+          </div>
+        </div>
 
-        <h3>Settings</h3>
-        <p>
-          Klipboard lives in your menu bar and stays out of the Dock. It starts at login, uses around 40 MB of RAM, and sits close to 0% CPU while idle. Every limit and shortcut can be customized in Settings (<kbd>⌘,</kbd>):
-        </p>
+        <div class="settings-block">
+          <h3>Settings</h3>
+          <p>
+            Klipboard lives in your menu bar and stays out of the Dock. It starts at login, uses around 40 MB of RAM, and sits close to 0% CPU while idle. Every limit and shortcut can be customized in Settings (<kbd>⌘,</kbd>):
+          </p>
 
-        <table class="settings-table">
-          <thead>
-            <tr>
-              <th class="col-tab">Tab</th>
-              <th>Options</th>
-            </tr>
-          </thead>
-          <tbody>
-            <tr>
-              <td class="col-tab">General</td>
-              <td>History size limit, auto-delete duration, screenshot capture, file cache limits, plain text defaults, quick paste modifier keys, hover preview delay, automatic Sparkle updates, backup import and export, and permissions check.</td>
-            </tr>
-            <tr>
-              <td class="col-tab">Shortcuts</td>
-              <td>Custom shortcut recording for Open Klipboard, Paste Next from Stack, Start or Stop Paste Stack, and Pause or Resume Recording.</td>
-            </tr>
-            <tr>
-              <td class="col-tab">Privacy</td>
-              <td>Password manager exclusion, ignored applications list, maximum text size, maximum image size, and clipboard polling frequency.</td>
-            </tr>
-            <tr>
-              <td class="col-tab">Snippets</td>
-              <td>Create, edit, and organize saved snippets.</td>
-            </tr>
-          </tbody>
-        </table>
+          <div class="settings-grid">
+            <div class="settings-table-col">
+              <table class="settings-table">
+                <thead>
+                  <tr>
+                    <th class="col-tab">Tab</th>
+                    <th>Options</th>
+                  </tr>
+                </thead>
+                <tbody>
+                  <tr>
+                    <td class="col-tab">General</td>
+                    <td>History size limit, auto-delete duration, screenshot capture, file cache limits, plain text defaults, quick paste modifier keys, automatic Sparkle updates, backup import and export, and permissions check.</td>
+                  </tr>
+                  <tr>
+                    <td class="col-tab">Shortcuts</td>
+                    <td>Custom shortcut recording for Open Klipboard, Paste Next from Stack, Start or Stop Paste Stack, and Pause or Resume Klipboard.</td>
+                  </tr>
+                  <tr>
+                    <td class="col-tab">Privacy</td>
+                    <td>Password manager exclusion, ignored applications list, maximum text size, maximum image size, and clipboard polling frequency.</td>
+                  </tr>
+                  <tr>
+                    <td class="col-tab">Snippets</td>
+                    <td>Create, edit, and organize saved snippets.</td>
+                  </tr>
+                </tbody>
+              </table>
+            </div>
 
-        <figure class="shot shot-small">
-          <img src="screenshot-menu.png" width="772" height="596" alt="Klipboard menu bar menu" />
-          <figcaption>The menu bar menu provides quick access to Settings, Paste Stack, Pause, and updates.</figcaption>
-        </figure>
+            <div class="settings-shot-col">
+              <figure class="shot shot-small">
+                <img src="screenshot-menu.png" width="772" height="596" alt="Klipboard menu bar menu" />
+                <figcaption>The menu bar menu provides quick access to Settings, Paste Stack, Pause, and updates.</figcaption>
+              </figure>
+            </div>
+          </div>
+        </div>
       </section>
 
       <section id="shortcuts">
         <h2>Keyboard shortcuts</h2>
         <p>Shortcuts can be customized in Settings.</p>
 
-        <div class="table-wrap">
+        <div class="shortcuts-grid">
           <table class="shortcut-table">
             <thead>
               <tr>
@@ -677,13 +855,20 @@
                 <td class="col-key"><kbd>⌘1</kbd>-<kbd>⌘9</kbd></td>
                 <td>Paste item 1-9 directly</td>
               </tr>
+            </tbody>
+          </table>
+
+          <table class="shortcut-table">
+            <thead>
+              <tr>
+                <th class="col-key">Shortcut</th>
+                <th>Action</th>
+              </tr>
+            </thead>
+            <tbody>
               <tr>
                 <td class="col-key"><kbd>⌘←</kbd> <kbd>⌘→</kbd></td>
                 <td>Switch filter category</td>
-              </tr>
-              <tr>
-                <td class="col-key"><kbd>Space</kbd> or <kbd>⌘Y</kbd></td>
-                <td>Show or hide preview</td>
               </tr>
               <tr>
                 <td class="col-key"><kbd>⌘⌫</kbd></td>
@@ -691,11 +876,11 @@
               </tr>
               <tr>
                 <td class="col-key"><kbd>Esc</kbd></td>
-                <td>Close preview, then close the panel</td>
+                <td>Close the panel</td>
               </tr>
               <tr>
                 <td class="col-key">Right-click</td>
-                <td>Context menu: paste plain text, pin, favorite, rename, edit note, save as snippet, reveal in Finder, preview, delete</td>
+                <td>Context menu: paste plain text, pin, favorite, rename, edit note, save as snippet, reveal in Finder, delete</td>
               </tr>
             </tbody>
           </table>
@@ -706,67 +891,81 @@
         <h2>Installation</h2>
         <p>Updates install automatically in the background after this version via Sparkle.</p>
 
-        <h3>Homebrew Cask</h3>
-        <p>If you use Homebrew, install the cask directly:</p>
-        <div class="terminal-row">
-          <code>brew trust akai-49/klipboard &amp;&amp; brew install --cask akai-49/klipboard/klipboard</code>
-          <button type="button" class="copy-btn" data-copy="brew trust akai-49/klipboard &amp;&amp; brew install --cask akai-49/klipboard/klipboard">Copy</button>
-        </div>
+        <div class="install-grid">
+          <div class="install-card">
+            <h3>Homebrew Cask</h3>
+            <p>If you use Homebrew, install the cask directly:</p>
+            <div class="terminal-row">
+              <code>brew trust akai-49/klipboard &amp;&amp; brew install --cask akai-49/klipboard/klipboard</code>
+              <button type="button" class="copy-btn" data-copy="brew trust akai-49/klipboard &amp;&amp; brew install --cask akai-49/klipboard/klipboard">Copy</button>
+            </div>
+          </div>
 
-        <h3>Terminal installer</h3>
-        <p>A single command that downloads the DMG, installs Klipboard to your Applications folder, removes the macOS quarantine attribute, and opens the app:</p>
-        <div class="terminal-row">
-          <code>curl -fsSL https://klipboard-beryl.vercel.app/install.sh | bash</code>
-          <button type="button" class="copy-btn" data-copy="curl -fsSL https://klipboard-beryl.vercel.app/install.sh | bash">Copy</button>
-        </div>
-
-        <h3>Direct download</h3>
-        <p>
-          Download <a href="Klipboard.dmg" download>Klipboard.dmg</a> (or visit <a href="https://github.com/akai-49/Klipboard/releases/latest">GitHub Releases</a>). Open the disk image and drag Klipboard to your Applications folder.
-        </p>
-
-        <div class="note-box">
-          <p><strong>First launch on macOS (Gatekeeper note):</strong></p>
-          <p>Because Klipboard is a personal open-source project and is not signed with a paid Apple Developer certificate, macOS may show a dialog saying the app was blocked.</p>
-          <ul>
-            <li>Right-click (or Control-click) <strong>Klipboard.app</strong> in Finder, choose <strong>Open</strong>, and click <strong>Open</strong> in the prompt.</li>
-            <li>Or open <strong>System Settings &gt; Privacy &amp; Security</strong>, scroll down to the Security section, and click <strong>Open Anyway</strong>.</li>
-            <li>Or paste this command into Terminal to clear the attribute:</li>
-          </ul>
-          <div class="terminal-row" style="background: var(--surface); margin-top: 10px;">
-            <code>xattr -cr /Applications/Klipboard.app &amp;&amp; open /Applications/Klipboard.app</code>
-            <button type="button" class="copy-btn" data-copy="xattr -cr /Applications/Klipboard.app &amp;&amp; open /Applications/Klipboard.app">Copy</button>
+          <div class="install-card">
+            <h3>Terminal installer</h3>
+            <p>A single command that downloads the DMG, installs Klipboard to your Applications folder, removes the macOS quarantine attribute, and opens the app:</p>
+            <div class="terminal-row">
+              <code>curl -fsSL https://klipboard-beryl.vercel.app/install.sh | bash</code>
+              <button type="button" class="copy-btn" data-copy="curl -fsSL https://klipboard-beryl.vercel.app/install.sh | bash">Copy</button>
+            </div>
           </div>
         </div>
 
-        <h3>Permissions</h3>
-        <p>
-          Klipboard requires <strong>Accessibility</strong> permission (named <em>Device Control and Data Access</em> on newer macOS versions) to paste clips directly into your active window. Without it, clicking an item copies it to your clipboard so you can press <kbd>⌘V</kbd> manually.
-        </p>
-        <p>
-          On first launch, a welcome window guides you through granting this permission in System Settings. If permissions are ever lost after rebuilding or updating, you can open the window again from the menu bar under <strong>Permissions...</strong>, or reset and re-grant using Terminal:
-        </p>
-        <div class="terminal-row">
-          <code>tccutil reset All com.abhishek.Klipboard</code>
-          <button type="button" class="copy-btn" data-copy="tccutil reset All com.abhishek.Klipboard">Copy</button>
-        </div>
-        <p>
-          If macOS asks for permission to access your Desktop folder, allow it so screenshots you capture can be saved to your clipboard history.
-        </p>
+        <div class="install-direct-section">
+          <h3>Direct download</h3>
+          <p>
+            Download <a href="Klipboard.dmg" download>Klipboard.dmg</a> (or visit <a href="https://github.com/akai-49/Klipboard/releases/latest">GitHub Releases</a>). Open the disk image and drag Klipboard to your Applications folder.
+          </p>
 
-        <h3>Build from source</h3>
-        <p>
-          Requires macOS 14.0 or later and Xcode Command Line Tools (<code>xcode-select --install</code>). Clone the repository from <a href="https://github.com/akai-49/Klipboard">GitHub</a> and run:
-        </p>
-        <div class="terminal-row">
-          <code>./build-release.sh</code>
-          <button type="button" class="copy-btn" data-copy="./build-release.sh">Copy</button>
+          <div class="note-box">
+            <p><strong>First launch on macOS (Gatekeeper note):</strong></p>
+            <p>Because Klipboard is a personal open-source project and is not signed with a paid Apple Developer certificate, macOS may show a dialog saying the app was blocked.</p>
+            <ul>
+              <li>Right-click (or Control-click) <strong>Klipboard.app</strong> in Finder, choose <strong>Open</strong>, and click <strong>Open</strong> in the prompt.</li>
+              <li>Or open <strong>System Settings &gt; Privacy &amp; Security</strong>, scroll down to the Security section, and click <strong>Open Anyway</strong>.</li>
+              <li>Or paste this command into Terminal to clear the attribute:</li>
+            </ul>
+            <div class="terminal-row" style="background: var(--surface); margin-top: 10px;">
+              <code>xattr -cr /Applications/Klipboard.app &amp;&amp; open /Applications/Klipboard.app</code>
+              <button type="button" class="copy-btn" data-copy="xattr -cr /Applications/Klipboard.app &amp;&amp; open /Applications/Klipboard.app">Copy</button>
+            </div>
+          </div>
+        </div>
+
+        <div class="install-grid">
+          <div class="install-card">
+            <h3>Permissions</h3>
+            <p>
+              Klipboard requires <strong>Accessibility</strong> permission (named <em>Device Control and Data Access</em> on newer macOS versions) to paste clips directly into your active window. Without it, clicking an item copies it to your clipboard so you can press <kbd>⌘V</kbd> manually.
+            </p>
+            <p>
+              On first launch, a welcome window guides you through granting this permission in System Settings. If permissions are ever lost after rebuilding or updating, you can open the window again from the menu bar under <strong>Permissions</strong>, or reset and re-grant using Terminal:
+            </p>
+            <div class="terminal-row">
+              <code>tccutil reset All com.abhishek.Klipboard</code>
+              <button type="button" class="copy-btn" data-copy="tccutil reset All com.abhishek.Klipboard">Copy</button>
+            </div>
+            <p>
+              If macOS asks for permission to access your Desktop folder, allow it so screenshots you capture can be saved to your clipboard history.
+            </p>
+          </div>
+
+          <div class="install-card">
+            <h3>Build from source</h3>
+            <p>
+              Requires macOS 14.0 or later and Xcode Command Line Tools (<code>xcode-select --install</code>). Clone the repository from <a href="https://github.com/akai-49/Klipboard">GitHub</a> and run:
+            </p>
+            <div class="terminal-row">
+              <code>./build-release.sh</code>
+              <button type="button" class="copy-btn" data-copy="./build-release.sh">Copy</button>
+            </div>
+          </div>
         </div>
       </section>
 
       <section id="requirements">
         <h2>System requirements</h2>
-        <ul>
+        <ul class="requirements-grid">
           <li>macOS 14.0 Sonoma or later</li>
           <li>Universal binary running natively on Apple Silicon and Intel Macs</li>
           <li>Memory: approximately 40 MB of RAM</li>
@@ -774,12 +973,14 @@
         </ul>
       </section>
     </main>
+  </div>
 
-    <footer>
+  <footer class="site-footer">
+    <div class="footer-inner">
       <span>Built by Abhishek Hiremath</span>
       <a href="https://github.com/akai-49/Klipboard">GitHub repository</a>
-    </footer>
-  </div>
+    </div>
+  </footer>
 
   <script>
     document.querySelectorAll('.copy-btn').forEach(function(button) {
