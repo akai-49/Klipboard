@@ -94,7 +94,7 @@ Requires macOS 14.0+ and Xcode Command Line Tools (`xcode-select --install`).
 The version comes from `MARKETING_VERSION` in [`project.yml`](project.yml), and the app is built universal (Apple Silicon + Intel). Everything can be overridden with environment variables:
 
 ```bash
-VERSION=0.3.0 BUNDLE_ID=com.abhishek.Klipboard ARCHS=arm64 MIN_MACOS=14.0 ./build-release.sh
+VERSION=0.4.0 BUNDLE_ID=com.abhishek.Klipboard ARCHS=arm64 MIN_MACOS=14.0 ./build-release.sh
 ```
 
 **Sign with a real certificate** so the Accessibility permission survives rebuilds (ad-hoc builds lose it every time):
@@ -154,7 +154,7 @@ Global shortcuts can be changed in **Settings → Shortcuts**; the modifiers for
 
 ## Automated Hosting & Releases
 
-- **GitHub Releases ([`.github/workflows/release.yml`](.github/workflows/release.yml))**: Every push to `main` builds the universal DMG on macOS and publishes it to the release for the version in `project.yml` (e.g. `v0.3.0`), as both `Klipboard-<version>.dmg` and `Klipboard.dmg`. To release a new version, bump `MARKETING_VERSION` and push.
+- **GitHub Releases ([`.github/workflows/release.yml`](.github/workflows/release.yml))**: Every push to `main` builds the universal DMG on macOS and publishes it to the release for the version in `project.yml` (e.g. `v0.4.0`), as both `Klipboard-<version>.dmg` and `Klipboard.dmg`. To release a new version, bump `MARKETING_VERSION` and push.
 - **Website ([`docs/`](docs/))**: Served by Vercel at [klipboard-beryl.vercel.app](https://klipboard-beryl.vercel.app), with the DMG at `/Klipboard.dmg` and the installer at `/install.sh`.
 - **Homebrew Cask ([`Casks/klipboard.rb`](Casks/klipboard.rb))**: The template for the [akai-49/homebrew-klipboard](https://github.com/akai-49/homebrew-klipboard) tap. CI fills in the version and checksum after each release. Newer Homebrew asks you to trust third-party taps first, hence `brew trust akai-49/klipboard`.
 

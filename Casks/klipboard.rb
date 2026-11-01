@@ -1,5 +1,5 @@
 cask "klipboard" do
-  version "0.3.0"
+  version "0.4.0"
   sha256 "SHA256_PLACEHOLDER"
 
   url "https://github.com/akai-49/Klipboard/releases/download/v#{version}/Klipboard-#{version}.dmg"
