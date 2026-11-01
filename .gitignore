@@ -25,3 +25,4 @@ xcuserdata/
 dist/*.app/
 dist/dmg-staging/
 dist/.*.tmp
+dist/*.dmg
