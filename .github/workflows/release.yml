@@ -120,6 +120,11 @@ jobs:
             exit 1
           fi
 
+          if ! grep -qF "Klipboard ${VERSION}<" RELEASE_NOTES.html; then
+            echo "::error::RELEASE_NOTES.html has no notes for ${VERSION}."
+            exit 1
+          fi
+
           SPARKLE_VERSION="$(sed -n 's/^SPARKLE_VERSION="\{0,1\}\([^"]*\)"\{0,1\}/\1/p' build-release.sh | head -1)"
           if [ -z "${SPARKLE_VERSION}" ]; then
             echo "::error::SPARKLE_VERSION not found in build-release.sh."
@@ -150,7 +155,7 @@ jobs:
                       <sparkle:version>${BUILD_NUM}</sparkle:version>
                       <sparkle:shortVersionString>${VERSION}</sparkle:shortVersionString>
                       <sparkle:minimumSystemVersion>14.0</sparkle:minimumSystemVersion>
-                      <sparkle:releaseNotesLink>https://github.com/akai-49/Klipboard/releases/tag/v${VERSION}</sparkle:releaseNotesLink>
+                      <description><![CDATA[$(cat RELEASE_NOTES.html)]]></description>
                       <enclosure url="https://github.com/akai-49/Klipboard/releases/download/v${VERSION}/Klipboard-${VERSION}.dmg" length="${DMG_LENGTH}" type="application/octet-stream" sparkle:edSignature="${ED_SIGNATURE}" />
                   </item>
               </channel>
