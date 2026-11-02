@@ -80,6 +80,17 @@ final class FeatureTests: XCTestCase {
         XCTAssertNil(stack.next())
     }
 
+    @MainActor
+    func testPasteStackCollectsCopyMatchingNewestHistoryItem() {
+        let vm = ClipboardViewModel(store: ClipboardStore(inMemory: true), snippets: SnippetStore(fileURL: nil))
+        vm.capture(item("already copied"))
+        vm.togglePasteStack()
+        vm.capture(item("already copied"))
+        vm.capture(item("second"))
+        XCTAssertEqual(vm.pasteStack.queue.map(\.text), ["already copied", "second"])
+        XCTAssertEqual(vm.items.count, 2)
+    }
+
     // MARK: Snippets
 
     func testSnippetsPersistAndMatch() throws {

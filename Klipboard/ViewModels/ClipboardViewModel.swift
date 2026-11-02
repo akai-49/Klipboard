@@ -144,10 +144,11 @@ final class ClipboardViewModel: ObservableObject {
     }
 
     func capture(_ item: ClipItem) {
+        // Every copy counts for the stack, even one matching the newest history item.
+        pasteStack.push(item)
         if let top = store.fetchAll().first, top.hasSameContent(as: item) {
             return
         }
-        pasteStack.push(item)
         store.insert(item)
         items = store.fetchAll()
     }

@@ -55,9 +55,11 @@ enum PasteboardWriter {
     /// Synthetic key events are silently dropped without Accessibility permission.
     static var isAccessibilityTrusted: Bool { AXIsProcessTrusted() }
 
-    /// Waits (up to ~500ms) for `app` to become active, then sends ⌘V to it.
-    static func paste(into app: NSRunningApplication?, attempts: Int = 25) {
-        if app == nil || app?.isActive == true || attempts == 0 {
+    /// Waits (up to ~1s) for `app` to become active and the shortcut's modifier keys to be
+    /// released, then sends ⌘V. A still-held ⌃⌥ would otherwise turn it into ⌃⌥⌘V.
+    static func paste(into app: NSRunningApplication?, attempts: Int = 50) {
+        let ready = (app == nil || app?.isActive == true) && !modifiersHeld
+        if ready || attempts == 0 {
             // Small grace period so the app's key window is ready for input.
             DispatchQueue.main.asyncAfter(deadline: .now() + 0.05) { simulatePaste() }
             return
@@ -65,6 +67,11 @@ enum PasteboardWriter {
         DispatchQueue.main.asyncAfter(deadline: .now() + 0.02) {
             paste(into: app, attempts: attempts - 1)
         }
+    }
+
+    private static var modifiersHeld: Bool {
+        !CGEventSource.flagsState(.hidSystemState)
+            .intersection([.maskCommand, .maskControl, .maskAlternate, .maskShift]).isEmpty
     }
 
     /// Simulates ⌘V so the copied item lands in whatever app was frontmost.
